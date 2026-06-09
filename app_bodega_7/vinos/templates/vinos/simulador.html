@@ -1,0 +1,1925 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Estándar de Mezclas</title>
+{% load static %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Cormorant+Garamond:ital,wght@0,300;0,500;1,300&display=swap');
+:root{
+  --bg:#f5f3f0;--bg2:#ffffff;--bg3:#eeeae4;--bg4:#e5dfd7;
+  --border:#cdc6bc;--border2:#b8b0a4;
+  --text:#1a1714;--muted:#6a6258;--muted2:#48423a;
+  --accent:#8b6914;--accent2:#1e6b28;--danger:#a82820;--warn:#7a5208;--blue:#1e4898;
+  --mono:'DM Mono',monospace;--serif:'Cormorant Garamond',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;overflow:hidden;}
+body{display:grid;grid-template-rows:auto 1fr;height:100vh;}
+
+/* TOP BAR */
+.tb-row1{display:flex;align-items:center;gap:8px;padding:5px 12px;border-bottom:1px solid var(--border);min-height:36px;}
+.tb-row2{display:flex;align-items:center;gap:5px;padding:3px 12px;min-height:30px;background:var(--bg3);}
+.tb-link{padding:2px 8px;font-family:var(--mono);font-size:.6rem;border-radius:3px;border:1px solid var(--border2);color:var(--muted);text-decoration:none;}
+.tb-link:hover{color:var(--text);}
+.temp-wrap{display:flex;align-items:center;gap:5px;font-size:.65rem;}
+.temp-wrap label{color:var(--muted);font-size:.63rem;white-space:nowrap;}
+.temp-wrap select,.tsel{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:.65rem;padding:2px 6px;border-radius:3px;outline:none;}
+h1{font-family:var(--serif);font-weight:300;font-size:.95rem;color:var(--accent);white-space:nowrap;}
+.topbar{display:flex;flex-direction:column;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;}
+.topbar h1{font-family:var(--serif);font-weight:300;font-size:1rem;color:var(--accent);white-space:nowrap;}
+.sep{width:1px;height:22px;background:var(--border2);flex-shrink:0;}
+.top-search-wrap{position:relative;width:280px;}
+.top-search-wrap input{width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:.72rem;padding:5px 10px;border-radius:3px;outline:none;}
+.top-search-wrap input:focus{border-color:var(--accent);}
+#top-dd{display:none;position:absolute;top:calc(100%+3px);left:0;right:0;background:var(--bg2);border:1px solid var(--border2);border-radius:3px;max-height:260px;overflow-y:auto;z-index:200;box-shadow:0 8px 20px rgba(0,0,0,.5);}
+.dd-row{padding:6px 10px;cursor:pointer;border-bottom:1px solid var(--border);font-size:.7rem;display:flex;gap:8px;align-items:center;}
+.dd-row:hover{background:var(--bg3);}
+
+/* temporada selector */
+.temp-wrap{display:flex;align-items:center;gap:6px;font-size:.68rem;}
+.temp-wrap label{color:var(--muted);}
+.temp-wrap select{background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:.68rem;padding:4px 8px;border-radius:3px;outline:none;cursor:pointer;}
+.temp-wrap select:focus{border-color:var(--accent);}
+
+/* right actions */
+.topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.sum-pill{padding:3px 9px;border-radius:3px;font-size:.65rem;font-weight:500;display:none;}
+.sum-ok{background:rgba(122,184,122,.15);color:var(--accent2);border:1px solid rgba(122,184,122,.3);}
+.sum-bad{background:rgba(204,90,82,.15);color:var(--danger);border:1px solid rgba(204,90,82,.3);}
+.btn{padding:4px 10px;font-family:var(--mono);font-size:.63rem;border-radius:3px;cursor:pointer;border:1px solid;letter-spacing:.04em;transition:all .12s;white-space:nowrap;}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:500;}
+.btn-primary:hover{background:#d4b87a;}
+.btn-ghost{background:transparent;border-color:var(--border2);color:var(--muted);}
+.btn-ghost:hover{border-color:var(--muted2);color:var(--text);}
+.btn-success{background:rgba(122,184,122,.15);border-color:rgba(122,184,122,.4);color:var(--accent2);}
+.btn-success:hover{background:rgba(122,184,122,.25);}
+.btn-warn{background:rgba(204,90,82,.1);border-color:rgba(204,90,82,.4);color:var(--danger);}
+
+/* MAIN GRID */
+.main{display:grid;grid-template-columns:240px 1fr;overflow:hidden;height:100%;}
+
+/* SIDEBAR */
+.sidebar{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;background:var(--bg2);}
+.sidebar-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
+.stab{flex:1;padding:7px 4px;text-align:center;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;transition:all .15s;}
+.stab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.sidebar-pane{flex:1;overflow-y:auto;display:none;flex-direction:column;}
+.sidebar-pane.active{display:flex;}
+
+/* filters bar */
+.filter-bar{padding:6px 8px;border-bottom:1px solid var(--border);display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0;}
+.fbtn{padding:2px 7px;font-family:var(--mono);font-size:.58rem;border-radius:2px;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--muted);transition:all .12s;}
+.fbtn.active{background:var(--accent);border-color:var(--accent);color:var(--bg);}
+.fbtn.fok{border-color:rgba(122,184,122,.4);color:var(--accent2);}
+.fbtn.fok.active{background:var(--accent2);color:var(--bg);}
+.fbtn.fpend{border-color:rgba(204,154,66,.4);color:var(--warn);}
+.fbtn.fpend.active{background:var(--warn);color:var(--bg);}
+
+/* wine list */
+.wine-list-wrap{flex:1;overflow-y:auto;}
+.wine-item{padding:5px 9px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:6px;transition:background .1s;}
+.wine-item:hover{background:var(--bg3);}
+.wine-item.active{background:var(--bg4);border-left:2px solid var(--accent);}
+.wine-item.desc{opacity:.55;}
+.wi-code{font-size:.7rem;font-weight:500;color:var(--accent);min-width:34px;flex-shrink:0;padding-top:1px;}
+.wi-body{flex:1;min-width:0;}
+.wi-name{font-size:.67rem;color:var(--text);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.wi-meta{display:flex;gap:6px;margin-top:2px;align-items:center;}
+.wi-nec{font-size:.58rem;color:var(--muted);}
+.wi-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;}
+.rev-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.rev-pendiente{background:var(--warn);}
+.rev-revisado{background:var(--blue);}
+.rev-validado{background:var(--accent2);}
+
+/* stock sidebar */
+.stock-wrap{flex:1;overflow-y:auto;}
+.stock-item{padding:6px 9px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;}
+.stock-item:hover{background:var(--bg3);}
+.stock-item.apt{border-left:2px solid var(--accent2);}
+.si-top{display:flex;justify-content:space-between;margin-bottom:2px;}
+.si-cod{font-size:.63rem;color:var(--accent);font-weight:500;}
+.si-stock{font-size:.63rem;color:var(--accent2);}
+.si-name{font-size:.65rem;color:var(--text);line-height:1.2;margin-bottom:2px;}
+.si-meta{display:flex;gap:6px;font-size:.58rem;color:var(--muted);}
+.si-precio{color:var(--warn);}
+
+/* CONTENT AREA */
+.content{display:flex;flex-direction:column;overflow:hidden;}
+.empty-msg{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:var(--muted);}
+.empty-msg .big{font-family:var(--serif);font-size:2.8rem;font-weight:300;color:var(--border2);}
+
+/* wine editor */
+.wine-editor{flex:1;display:none;flex-direction:column;overflow:hidden;}
+.wine-editor.open{display:flex;}
+.editor-hdr{padding:9px 14px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;align-items:flex-start;gap:10px;flex-shrink:0;}
+.eh-info{flex:1;min-width:0;}
+.eh-title{font-family:var(--serif);font-weight:300;font-size:1.05rem;line-height:1.2;margin-bottom:3px;}
+.eh-meta{display:flex;gap:8px;font-size:.63rem;color:var(--muted);flex-wrap:wrap;align-items:center;}
+.eh-actions{display:flex;gap:5px;align-items:flex-start;flex-shrink:0;}
+
+/* editor tabs */
+.editor-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg2);padding:0 10px;flex-shrink:0;}
+.etab{padding:5px 10px;font-size:.59rem;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;transition:all .15s;}
+.etab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.epane{flex:1;overflow:hidden;display:none;}
+.epane.active{display:flex;flex-direction:column;overflow:hidden;}
+
+/* ── CONFIG PANE ── */
+.config-layout{flex:1;display:grid;grid-template-columns:1fr 320px;overflow:hidden;}
+.comp-list{overflow-y:auto;padding:8px;}
+.comp-card{background:var(--bg2);border:1px solid var(--border);border-radius:4px;margin-bottom:5px;overflow:hidden;transition:border-color .15s;}
+.comp-card.apt{border-left:2px solid var(--accent2);}
+.cc-top{display:grid;grid-template-columns:1fr auto;padding:7px 9px 3px;gap:4px;}
+.cc-name{font-size:.68rem;line-height:1.3;}
+.cc-mat{font-size:.58rem;color:var(--muted);margin-top:1px;}
+.cc-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
+.cc-precio{font-size:.65rem;color:var(--warn);}
+.cc-body{padding:3px 9px 7px;}
+.years-row{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:5px;font-size:.6rem;}
+.yr-lbl{color:var(--muted);margin-bottom:1px;}
+.yr-val{color:var(--muted2);}
+.yr-val.new{color:var(--accent);font-size:.72rem;font-weight:500;}
+.slider-row{display:flex;align-items:center;gap:5px;margin-bottom:3px;}
+input[type=range]{flex:1;-webkit-appearance:none;height:3px;background:var(--bg4);border-radius:2px;outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg);}
+.pct-inp{width:55px;background:var(--bg4);border:1px solid var(--border2);color:var(--accent);font-family:var(--mono);font-size:.7rem;padding:2px 5px;border-radius:3px;text-align:right;outline:none;}
+.pct-inp:focus{border-color:var(--accent);}
+.pct-unit{font-size:.6rem;color:var(--muted);}
+.cc-rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.75rem;padding:0 2px;transition:color .1s;}
+.cc-rm:hover{color:var(--danger);}
+.stk-bar{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;}
+.stk-fill{height:100%;border-radius:2px;transition:width .2s,background .2s;}
+.stk-labels{display:flex;justify-content:space-between;font-size:.57rem;color:var(--muted);margin-top:2px;}
+.stk-nec-global{font-size:.57rem;color:var(--muted);margin-top:1px;}
+
+/* right panel of config: variedades + notas */
+.config-right{border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;background:var(--bg2);}
+.cr-section{padding:8px 10px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.cr-title{font-size:.6rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.var-chart{display:flex;flex-direction:column;gap:3px;}
+.var-row{display:flex;align-items:center;gap:5px;font-size:.62rem;}
+.var-name{width:100px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;}
+.var-bar-wrap{flex:1;height:8px;background:var(--bg3);border-radius:2px;overflow:hidden;}
+.var-bar-fill{height:100%;border-radius:2px;transition:width .3s;}
+.var-pct{width:35px;text-align:right;color:var(--accent);flex-shrink:0;}
+.var-ref{width:35px;text-align:right;color:var(--muted);flex-shrink:0;font-size:.58rem;}
+
+/* notas */
+.cr-notas{flex:1;display:flex;flex-direction:column;padding:8px 10px;gap:6px;}
+textarea.notas-ta{flex:1;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:.68rem;padding:7px 9px;border-radius:3px;outline:none;resize:none;line-height:1.5;}
+textarea.notas-ta:focus{border-color:var(--accent);}
+
+/* revision selector inline */
+.rev-sel{display:flex;gap:5px;flex-wrap:wrap;}
+.rev-btn{padding:3px 8px;font-family:var(--mono);font-size:.6rem;border-radius:3px;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--muted);transition:all .12s;}
+.rev-btn.active-pendiente{background:rgba(204,154,66,.2);border-color:var(--warn);color:var(--warn);}
+.rev-btn.active-revisado{background:rgba(91,141,217,.2);border-color:var(--blue);color:var(--blue);}
+.rev-btn.active-validado{background:rgba(122,184,122,.2);border-color:var(--accent2);color:var(--accent2);}
+
+/* ── RESUMEN PANE ── */
+.resumen-wrap{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:12px;}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:9px 11px;}
+.kpi-lbl{font-size:.57rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;}
+.kpi-val{font-family:var(--serif);font-size:1.6rem;font-weight:300;line-height:1;}
+.kpi-sub{font-size:.6rem;color:var(--muted);margin-top:2px;}
+.kpi-delta{font-size:.63rem;margin-top:2px;}
+.sec-lbl{font-size:.6rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);padding-bottom:4px;}
+.comp-tbl{width:100%;border-collapse:collapse;font-size:.67rem;}
+.comp-tbl th{text-align:right;padding:4px 7px;font-size:.57rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);}
+.comp-tbl th:first-child,.comp-tbl th:nth-child(2){text-align:left;}
+.comp-tbl td{padding:5px 7px;border-bottom:1px solid var(--border);text-align:right;vertical-align:middle;}
+.comp-tbl td:first-child,.comp-tbl td:nth-child(2){text-align:left;}
+.chip{display:inline-block;padding:1px 5px;border-radius:2px;font-size:.57rem;}
+.chip-ok{background:rgba(122,184,122,.15);color:var(--accent2);}
+.chip-warn{background:rgba(204,154,66,.15);color:var(--warn);}
+.chip-bad{background:rgba(204,90,82,.15);color:var(--danger);}
+.chip-apt{background:rgba(201,169,109,.1);color:var(--accent);border:1px solid rgba(201,169,109,.3);}
+.chart-box{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:9px;max-height:180px;}
+
+/* ── GLOBAL PANE ── */
+.global-wrap{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+.global-filters{padding:6px 10px;border-bottom:1px solid var(--border);display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0;}
+.global-tbl-wrap{flex:1;overflow:auto;}
+.global-tbl{width:100%;border-collapse:collapse;font-size:.67rem;}
+.global-tbl th{text-align:right;padding:5px 8px;font-size:.57rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:2;}
+.global-tbl th:first-child,.global-tbl th:nth-child(2),.global-tbl th:nth-child(3){text-align:left;}
+.global-tbl td{padding:5px 8px;border-bottom:1px solid var(--border);text-align:right;vertical-align:middle;}
+.global-tbl td:first-child,.global-tbl td:nth-child(2),.global-tbl td:nth-child(3){text-align:left;}
+.global-tbl tr:hover td{background:var(--bg2);cursor:pointer;}
+.global-tbl tr.cur td{background:var(--bg3);}
+.dp{color:var(--danger);}
+.dn{color:var(--accent2);}
+
+/* badges */
+.badge{display:inline-block;padding:1px 5px;border-radius:2px;font-size:.58rem;font-weight:500;letter-spacing:.04em;border:1px solid;}
+.badge-UP{color:#7ab87a;border-color:#7ab87a;}
+.badge-SP{color:#6eabc8;border-color:#6eabc8;}
+.badge-PR{color:var(--accent);border-color:var(--accent);}
+.badge-VA{color:#b87fc7;border-color:#b87fc7;}
+.badge-BL{color:#7a9fc7;border-color:#7a9fc7;}
+.badge-GE{color:#c7a06e;border-color:#c7a06e;}
+
+/* toast */
+.toast{position:fixed;bottom:18px;right:18px;background:var(--bg2);border:1px solid var(--border2);padding:8px 14px;border-radius:4px;font-size:.7rem;z-index:300;display:none;animation:fadein .2s;}
+@keyframes fadein{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+/* modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:250;align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:5px;width:480px;max-height:75vh;display:flex;flex-direction:column;}
+.modal-hdr{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.modal-title{font-family:var(--serif);font-weight:300;font-size:.95rem;}
+.modal-x{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;}
+.modal-body{flex:1;overflow-y:auto;padding:12px 14px;}
+.modal-foot{padding:8px 14px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:7px;}
+
+/* scrollbars */
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="tb-row1">
+    <h1>⬡ Estándar</h1>
+    <div class="sep"></div>
+    <div class="temp-wrap">
+      <label>Config:</label>
+      <select id="sel-temporada">
+        {% for t in temporadas %}<option value="{{ t.id }}"{% if t.id == temp_activa_id %} selected{% endif %}>{{ t.anio }}</option>{% endfor %}
+        {% if not temporadas %}<option value="">— sin datos —</option>{% endif %}
+      </select>
+      <label>Ref:</label>
+      <select id="sel-ref">
+        <option value="" selected>— —</option>
+        {% for t in temporadas %}<option value="{{ t.id }}">{{ t.anio }}</option>{% endfor %}
+      </select>
+      <div class="sep"></div>
+      <label style="color:var(--blue);">Stock:</label>
+      <select id="sel-corte" style="color:var(--blue);max-width:160px;">
+        <option value="">Cargando…</option>
+      </select>
+      <button class="btn btn-ghost" id="btn-recalcular" style="color:var(--blue);border-color:var(--blue);padding:2px 7px;" title="Recalcular con este corte">↻</button>
+    </div>
+    <div class="sep"></div>
+    <div class="top-search-wrap">
+      <input id="top-search" placeholder="Buscar vino…" autocomplete="off">
+      <div id="top-dd"></div>
+    </div>
+    <div style="margin-left:auto"></div>
+    <span id="sum-pill" class="sum-pill"></span>
+  </div>
+  <div class="tb-row2">
+    <button class="btn btn-success" id="btn-guardar" style="display:none">💾 Guardar</button>
+    <button class="btn btn-ghost" id="btn-reset" style="display:none">↺ Reset</button>
+    <button class="btn btn-ghost" id="btn-export">⬇ CSV</button>
+    <button class="btn btn-ghost" id="btn-nuevo-anio">📅 Nuevo año</button>
+    <button class="btn btn-ghost" id="btn-cargar-excel">📂 Cargar Excel</button>
+    <div style="margin-left:auto"></div>
+    <a href="/admin/" target="_blank" class="tb-link">⚙ Admin</a>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-tabs">
+    <div class="stab active" data-pane="wines">🍷 Vinos</div>
+    <div class="stab" data-pane="stock">📦 Stock</div>
+  </div>
+
+  <!-- wines pane -->
+  <div class="sidebar-pane active" id="sp-wines">
+    <div class="filter-bar">
+      <span style="font-size:.58rem;color:var(--muted);">Mezcla:</span>
+      <button class="fbtn active" data-f-estado="todos">Todos</button>
+      <button class="fbtn" data-f-estado="vigente">Vigente</button>
+      <button class="fbtn" data-f-estado="no vigente">No vig.</button>
+      <button class="fbtn" data-f-estado="descontinuado">Desc.</button>
+    </div>
+    <div class="filter-bar">
+      <span style="font-size:.58rem;color:var(--muted);">Rev:</span>
+      <button class="fbtn active" data-f-rev="todos">Todos</button>
+      <button class="fbtn" data-f-rev="pendiente">Pend.</button>
+      <button class="fbtn" data-f-rev="revisado">Revis.</button>
+      <button class="fbtn" data-f-rev="validado">Valid.</button>
+    </div>
+    <div class="filter-bar" id="fbar-enol">
+      <span style="font-size:.58rem;color:var(--muted);">Enól:</span>
+      <button class="fbtn active" data-f-enol="todos">Todos</button>
+    </div>
+    <div class="filter-bar" id="fbar-cal">
+      <span style="font-size:.58rem;color:var(--muted);">Cal:</span>
+      <button class="fbtn active" data-f-cal="todos">Todas</button>
+    </div>
+    <div class="filter-bar" id="fbar-var">
+      <span style="font-size:.58rem;color:var(--muted);">Var:</span>
+      <button class="fbtn active" data-f-var="todos">Todas</button>
+    </div>
+    <div class="filter-bar">
+      <span style="font-size:.58rem;color:var(--muted);">Color:</span>
+      <button class="fbtn active" data-f-color="todos">Todos</button>
+      <button class="fbtn" data-f-color="B">Blanco</button>
+      <button class="fbtn" data-f-color="T">Tinto</button>
+    </div>
+    <div style="padding:5px 8px;border-bottom:1px solid var(--border);">
+      <input id="wine-search" style="width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:.68rem;padding:4px 8px;border-radius:3px;outline:none;" placeholder="Buscar…" autocomplete="off">
+    </div>
+    <div class="wine-list-wrap" id="wine-list"></div>
+  </div>
+
+  <!-- stock pane -->
+  <div class="sidebar-pane" id="sp-stock">
+    <div class="filter-bar">
+      <button class="fbtn active" data-sf="all">Todos</button>
+      <button class="fbtn" data-sf="apt">⭐ Aptitud</button>
+      <button class="fbtn" data-sf="B">Blancos</button>
+      <button class="fbtn" data-sf="T">Tintos</button>
+    </div>
+    <div class="filter-bar" id="fbar-bod">
+      <span style="font-size:.58rem;color:var(--muted);">Bodega:</span>
+      <button class="fbtn active" data-sf-bod="todos">Todas</button>
+    </div>
+    <div class="filter-bar" style="gap:4px;">
+      <span style="font-size:.58rem;color:var(--muted);">Orden:</span>
+      <button class="fbtn active" data-sort-stock="apt">⭐ Apt</button>
+      <button class="fbtn" data-sort-stock="precio_asc">$ ↑</button>
+      <button class="fbtn" data-sort-stock="precio_desc">$ ↓</button>
+      <button class="fbtn" data-sort-stock="stock_desc">L ↓</button>
+      <button class="fbtn" data-sort-stock="stock_asc">L ↑</button>
+    </div>
+    <div style="padding:5px 8px;border-bottom:1px solid var(--border);">
+      <input id="stock-search" style="width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:.68rem;padding:4px 8px;border-radius:3px;outline:none;" placeholder="Buscar componente…" autocomplete="off">
+    </div>
+    <div class="stock-wrap" id="stock-list"></div>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+  <div class="empty-msg" id="empty-msg">
+    <div class="big">⬡</div>
+    <div style="font-size:.75rem;">Selecciona un vino de la lista</div>
+    <div style="font-size:.62rem;color:var(--muted);margin-top:3px;">Usa el selector de temporada para cargar los datos del año</div>
+  </div>
+
+  <div class="wine-editor" id="wine-editor">
+    <div class="editor-hdr">
+      <div class="eh-info">
+        <div class="eh-title" id="eh-title"></div>
+        <div class="eh-meta" id="eh-meta"></div>
+      </div>
+      <div class="eh-actions">
+        <div class="rev-sel" id="rev-sel"></div>
+      </div>
+    </div>
+    <div class="editor-tabs">
+      <div class="etab active" data-ep="config">⚙ Configuración</div>
+      <div class="etab" data-ep="resumen">📊 Análisis</div>
+      <div class="etab" data-ep="global">🌐 Todos</div>
+      <div class="etab" data-ep="stockprecios">📦 Stock & Precios</div>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="epane active" id="ep-config">
+      <div class="config-layout">
+        <div class="comp-list" id="comp-list"></div>
+        <div class="config-right">
+          <div class="cr-section">
+            <div class="cr-title">% por variedad — </div>
+            <div class="var-chart" id="var-chart"></div>
+          </div>
+          <div class="cr-section" style="font-size:.6rem;">
+            <div class="cr-title">Comparativo vs referencia</div>
+            <div id="var-cmp" style="display:flex;flex-direction:column;gap:3px;"></div>
+          </div>
+          <div class="cr-notas">
+            <div class="cr-title">Notas de revisión</div>
+            <textarea class="notas-ta" id="notas-ta" placeholder="Escribe notas sobre esta configuración…"></textarea>
+            <button class="btn btn-ghost" id="btn-save-notas" style="font-size:.6rem;padding:3px 8px;">Guardar notas</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESUMEN -->
+    <div class="epane" id="ep-resumen">
+      <div class="resumen-wrap" id="resumen-wrap"></div>
+    </div>
+
+    <!-- GLOBAL -->
+    <div class="epane" id="ep-global">
+      <div class="global-wrap">
+        <div class="global-filters">
+          <button class="fbtn active" data-gf="todos">Todos</button>
+          <button class="fbtn" data-gf="vigente">Vigente</button>
+          <button class="fbtn" data-gf="descontinuado">Descontinuado</button>
+          <div class="sep" style="height:14px;margin:0 3px;"></div>
+          <button class="fbtn active" data-gr="todos">Todos rev.</button>
+          <button class="fbtn fpend" data-gr="pendiente">Pendiente</button>
+          <button class="fbtn" data-gr="revisado">Revisado</button>
+          <button class="fbtn fok" data-gr="validado">Validado</button>
+        </div>
+        <div class="global-tbl-wrap">
+          <table class="global-tbl">
+            <thead><tr>
+              <th>Cód</th><th>Vino</th><th>Cal</th>
+              <th>Necesidad L</th>
+              <th>$/L ref</th><th>$/L nueva</th>
+              <th>Δ $/L</th><th>Δ%</th>
+              <th>✓</th><th>⚠</th><th>✗</th>
+              <th>Revisión</th>
+            </tr></thead>
+            <tbody id="global-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- STOCK & PRECIOS PANE -->
+    <div class="epane" id="ep-stockprecios">
+      <div style="display:flex;flex-direction:column;overflow:hidden;height:100%;">
+        <!-- sub-tabs -->
+        <div style="display:flex;border-bottom:1px solid var(--border);background:var(--bg2);padding:0 12px;flex-shrink:0;">
+          <div class="etab active" data-sp="stock" style="font-size:.6rem;">📦 Stock vigente</div>
+          <div class="etab" data-sp="historico" style="font-size:.6rem;">🗓 Historial cortes</div>
+          <div class="etab" data-sp="precios" style="font-size:.6rem;">💰 Precios</div>
+          <div class="etab" data-sp="evolutivo" style="font-size:.6rem;">📈 Evolutivo precio</div>
+        </div>
+
+        <!-- Stock vigente -->
+        <div class="sp-pane active" id="sp-stock" style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+          <div style="padding:7px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;">
+            <input id="sp-stock-search" placeholder="Buscar material…" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:.68rem;padding:4px 9px;border-radius:3px;outline:none;width:240px;">
+            <select id="sp-stock-color" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:.65rem;padding:4px 8px;border-radius:3px;outline:none;">
+              <option value="">Todos los colores</option>
+              <option value="B">Blancos</option>
+              <option value="T">Tintos</option>
+            </select>
+            <span id="sp-stock-corte-lbl" style="font-size:.62rem;color:var(--muted);margin-left:auto;"></span>
+          </div>
+          <div style="flex:1;overflow-y:auto;">
+            <table class="global-tbl" id="sp-stock-tbl">
+              <thead><tr>
+                <th style="text-align:left">Material</th>
+                <th style="text-align:left">Descripción</th>
+                <th style="text-align:left">Variedad</th>
+                <th style="text-align:left">Valle</th>
+                <th style="text-align:left">Cal</th>
+                <th>Litros</th>
+                <th>$/L vigente</th>
+                <th>Aptitud</th>
+              </tr></thead>
+              <tbody id="sp-stock-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Historial cortes -->
+        <div class="sp-pane" id="sp-historico" style="flex:1;overflow-y:auto;padding:12px;display:none;">
+          <div style="font-size:.62rem;color:var(--muted);margin-bottom:10px;">
+            Cada carga de stock crea un corte. El corte <strong style="color:var(--accent2)">vigente</strong> es el que se usa en los cálculos de cobertura.
+            Puedes cambiar el vigente haciendo clic en un corte anterior.
+          </div>
+          <div id="sp-cortes-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
+
+        <!-- Precios resumen -->
+        <div class="sp-pane" id="sp-precios" style="flex:1;overflow:hidden;display:flex;flex-direction:column;display:none;">
+          <div style="padding:7px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;">
+            <input id="sp-precio-search" placeholder="Buscar material…" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:.68rem;padding:4px 9px;border-radius:3px;outline:none;width:240px;">
+            <span style="font-size:.62rem;color:var(--muted)">Último precio registrado por material</span>
+          </div>
+          <div style="flex:1;overflow-y:auto;">
+            <table class="global-tbl" id="sp-precio-tbl">
+              <thead><tr>
+                <th style="text-align:left">Material</th>
+                <th style="text-align:left">Descripción</th>
+                <th style="text-align:left">Variedad</th>
+                <th style="text-align:left">Valle</th>
+                <th>Último $/L</th>
+                <th>Período</th>
+                <th>Meses hist.</th>
+                <th>Ver evolutivo</th>
+              </tr></thead>
+              <tbody id="sp-precio-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Evolutivo precio -->
+        <div class="sp-pane" id="sp-evolutivo" style="flex:1;overflow-y:auto;padding:12px;display:none;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+            <input id="sp-evo-mat" placeholder="Código material (ej: 101750)" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:.7rem;padding:5px 9px;border-radius:3px;outline:none;width:200px;">
+            <button class="btn btn-ghost" id="sp-evo-btn" style="font-size:.63rem;">Ver evolutivo</button>
+            <span id="sp-evo-mat-desc" style="font-size:.68rem;color:var(--accent);"></span>
+          </div>
+          <canvas id="sp-evo-chart" style="max-height:260px;"></canvas>
+          <div id="sp-evo-tbl-wrap" style="margin-top:12px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL stock detail -->
+<div class="modal-bg" id="modal-stock">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="ms-title">Componente</div>
+      <button class="modal-x" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="ms-body"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" id="ms-add-btn">+ Agregar a mezcla</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVO AÑO -->
+<div class="modal-bg" id="modal-anio">
+  <div class="modal" style="width:440px;">
+    <div class="modal-hdr">
+      <div class="modal-title">📅 Iniciar configuración de nuevo año</div>
+      <button class="modal-x" id="modal-anio-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.72rem;color:var(--muted2);line-height:1.6;margin-bottom:14px;">
+        Copia todas las configuraciones de un año como punto de partida para el nuevo.
+        Todos los vinos quedarán con revisión <strong style="color:var(--warn)">pendiente</strong>
+        para que puedas revisar y ajustar los que cambian.
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div>
+          <div style="font-size:.6rem;color:var(--muted);margin-bottom:4px;">COPIAR DESDE (origen)</div>
+          <select id="anio-origen" style="width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:.75rem;padding:6px 9px;border-radius:3px;outline:none;"></select>
+        </div>
+        <div>
+          <div style="font-size:.6rem;color:var(--muted);margin-bottom:4px;">AÑO NUEVO (destino)</div>
+          <input id="anio-destino" type="number" value="2027" min="2020" max="2040"
+            style="width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--accent);font-family:var(--mono);font-size:.75rem;padding:6px 9px;border-radius:3px;outline:none;">
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:.68rem;cursor:pointer;">
+          <input type="checkbox" id="chk-solo-vigentes" checked>
+          Solo copiar vinos vigentes (omitir descontinuados)
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:.68rem;cursor:pointer;">
+          <input type="checkbox" id="chk-forzar">
+          Sobreescribir si ya existen datos en el año destino
+        </label>
+      </div>
+      <div id="anio-result" style="display:none;padding:9px 12px;border-radius:3px;font-size:.7rem;line-height:1.6;"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="modal-anio-cancel">Cancelar</button>
+      <button class="btn btn-primary" id="btn-copiar-anio">📋 Copiar configuraciones</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CARGAR EXCEL -->
+<div class="modal-bg" id="modal-upload">
+  <div class="modal" style="width:500px;">
+    <div class="modal-hdr">
+      <div class="modal-title">📂 Cargar bases desde Excel</div>
+      <button class="modal-x" id="modal-upload-close">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Tipo de archivo -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:.6rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;">Tipo de archivo</div>
+        <div style="display:flex;gap:6px;">
+          <button class="fbtn active" data-modo="auto" id="modo-auto">Auto-detectar</button>
+          <button class="fbtn" data-modo="original">Excel original</button>
+          <button class="fbtn" data-modo="plantilla">Plantilla simplificada</button>
+        </div>
+        <div id="modo-desc" style="font-size:.62rem;color:var(--muted);margin-top:5px;line-height:1.5;">
+          Detecta automáticamente si es el Excel original o la plantilla simplificada.
+        </div>
+      </div>
+
+      <!-- Qué cargar -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:.6rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;">Qué actualizar</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="fbtn active" data-solo="">Todo (base + stock + precios)</button>
+          <button class="fbtn" data-solo="stock">Solo stock</button>
+          <button class="fbtn" data-solo="precios">Solo precios</button>
+        </div>
+      </div>
+
+      <!-- Año + Mes + Archivo -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 2fr;gap:10px;margin-bottom:12px;">
+        <div>
+          <div style="font-size:.6rem;color:var(--muted);margin-bottom:4px;">AÑO</div>
+          <input id="upload-anio" type="number" value="2026" min="2020" max="2040"
+            style="width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--accent);
+            font-family:var(--mono);font-size:.8rem;padding:6px 9px;border-radius:3px;outline:none;">
+        </div>
+        <div>
+          <div style="font-size:.6rem;color:var(--muted);margin-bottom:4px;">MES (1-12)</div>
+          <input id="upload-mes" type="number" value="" min="1" max="12" placeholder="Actual"
+            style="width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--accent);
+            font-family:var(--mono);font-size:.8rem;padding:6px 9px;border-radius:3px;outline:none;">
+        </div>
+        <div>
+          <div style="font-size:.6rem;color:var(--muted);margin-bottom:4px;">ARCHIVO EXCEL</div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;
+            background:var(--bg3);border:1px solid var(--border2);border-radius:3px;padding:6px 9px;">
+            <span id="upload-filename" style="font-size:.7rem;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Sin archivo…</span>
+            <span style="font-size:.65rem;color:var(--accent);flex-shrink:0;">Elegir</span>
+            <input type="file" id="upload-file" accept=".xlsx,.xls" style="display:none;">
+          </label>
+        </div>
+      </div>
+
+      <!-- Qué hojas reconoce -->
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:8px 11px;margin-bottom:12px;font-size:.62rem;color:var(--muted);line-height:1.7;">
+        <div style="color:var(--text);font-weight:500;margin-bottom:4px;">Hojas reconocidas automáticamente:</div>
+        <div><span style="color:var(--accent)">BASE</span> — configuraciones (Part2024, Part2026)</div>
+        <div><span style="color:var(--accent2)">STOCK</span> o <span style="color:var(--accent2)">STOCK OCT</span> — crea un nuevo corte mensual y lo marca como vigente</div>
+        <div><span style="color:#5b8dd9">NECESIDADES</span> o <span style="color:#5b8dd9">PRODUCCION 20XX</span> — litros a producir</div>
+        <div><span style="color:var(--warn)">PRECIOS</span> o <span style="color:var(--warn)">TD$CON COMPRA UVA</span> — guarda precios del mes y actualiza el stock vigente</div>
+      </div>
+
+      <!-- Resultado -->
+      <div id="upload-result" style="display:none;padding:10px 12px;border-radius:3px;font-size:.7rem;line-height:1.7;"></div>
+
+      <!-- Progress -->
+      <div id="upload-progress" style="display:none;padding:8px 0;font-size:.68rem;color:var(--muted);">
+        <div style="height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:6px;">
+          <div id="upload-bar" style="height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width 0.3s;"></div>
+        </div>
+        <span id="upload-msg">Procesando…</span>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="modal-upload-cancel">Cancelar</button>
+      <button class="btn btn-primary" id="btn-upload-go" disabled>📤 Cargar archivo</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+
+
+
+// inject into existing script — modal nuevo año
+function openModalAnio() {
+  // populate origen selector
+  const sel = document.getElementById('anio-origen');
+  sel.innerHTML = '';
+  document.querySelectorAll('#sel-temporada option').forEach(opt => {
+    if (opt.value) {
+      const o = document.createElement('option');
+      o.value = opt.text; // año numérico
+      o.textContent = opt.text;
+      sel.appendChild(o);
+    }
+  });
+  // suggest destino = max año + 1
+  const anios = Array.from(document.querySelectorAll('#sel-temporada option'))
+    .map(o => parseInt(o.text)).filter(Boolean);
+  if (anios.length) {
+    document.getElementById('anio-destino').value = Math.max(...anios) + 1;
+    sel.value = Math.max(...anios); // default origen = último año
+  }
+  document.getElementById('anio-result').style.display = 'none';
+  document.getElementById('modal-anio').classList.add('open');
+}
+
+document.getElementById('btn-nuevo-anio').addEventListener('click', openModalAnio);
+document.getElementById('modal-anio-close').addEventListener('click', () =>
+  document.getElementById('modal-anio').classList.remove('open'));
+document.getElementById('modal-anio-cancel').addEventListener('click', () =>
+  document.getElementById('modal-anio').classList.remove('open'));
+
+document.getElementById('btn-copiar-anio').addEventListener('click', async () => {
+  const origen = parseInt(document.getElementById('anio-origen').value);
+  const destino = parseInt(document.getElementById('anio-destino').value);
+  const soloVigentes = document.getElementById('chk-solo-vigentes').checked;
+  const forzar = document.getElementById('chk-forzar').checked;
+
+  const btn = document.getElementById('btn-copiar-anio');
+  btn.disabled = true; btn.textContent = 'Copiando…';
+
+  const r = await fetch('/api/copiar-temporada/', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()},
+    body: JSON.stringify({origen, destino, forzar, solo_vigentes: soloVigentes})
+  });
+  const data = await r.json();
+  btn.disabled = false; btn.textContent = '📋 Copiar configuraciones';
+
+  const box = document.getElementById('anio-result');
+  box.style.display = 'block';
+  if (data.ok) {
+    box.style.background = 'rgba(122,184,122,.1)';
+    box.style.border = '1px solid rgba(122,184,122,.3)';
+    box.style.color = 'var(--accent2)';
+    box.innerHTML = `✓ Listo.<br>
+      <strong>${data.vinos_copiados}</strong> vinos copiados · <strong>${data.componentes}</strong> componentes<br>
+      ${data.saltados ? `${data.saltados} vinos saltados (ya tenían datos en ${destino})` : ''}<br>
+      Todos los vinos quedaron con revisión <strong>pendiente</strong>.<br><br>
+      Ahora selecciona <strong>${destino}</strong> como temporada activa y <strong>${origen}</strong> como referencia.`;
+    // reload page so new temporada appears in selectors
+    setTimeout(() => location.reload(), 2800);
+  } else {
+    box.style.background = 'rgba(212,100,90,.1)';
+    box.style.border = '1px solid rgba(212,100,90,.3)';
+    box.style.color = 'var(--danger)';
+    box.textContent = `Error: ${data.error}`;
+  }
+});
+
+// ── STATE ─────────────────────────────────────────────────────────────
+let currentCodigo = null;
+let currentWine = null;      // {vino, componentes}
+let pendingChanges = {};     // material_codigo -> pct (fracción)
+let allWines = [];
+let allStock = [];
+let chartInst = null;
+let modalStockItem = null;
+
+const getCsrf = () => document.cookie.split(';').map(c=>c.trim())
+  .find(c=>c.startsWith('csrftoken='))?.split('=')[1] || '';
+
+function getTemporada() {
+  const el = document.getElementById('sel-temporada');
+  if (!el) return '';
+  if (!el.value) { const f=Array.from(el.options).find(o=>o.value); if(f) el.value=f.value; }
+  return el.value || '';
+}
+function getCorteId() { const el=document.getElementById('sel-corte'); return el?el.value||'':''; }
+function getRef()     { const el=document.getElementById('sel-ref');   return el?el.value||'':''; }
+function getConfigLabel() { const s=document.getElementById('sel-temporada'); return s?.options[s?.selectedIndex]?.text||'—'; }
+function getRefLabel() { const s=document.getElementById('sel-ref'); return s?.options[s?.selectedIndex]?.value?s.options[s.selectedIndex].text:'(sin ref)'; }
+function getNewLabel() { return getConfigLabel(); }
+
+// ── FORMAT HELPERS ────────────────────────────────────────────────────
+const fN = n => n==null?'—':Math.round(n).toLocaleString('es-CL');
+const fD = n => n==null?'—':n.toLocaleString('es-CL',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fP = n => (n*100).toFixed(1)+'%';
+const fDP = (n,ref) => {
+  if (!ref) return '—';
+  const d=n-ref; const p=d/ref*100;
+  return `<span class="${d>0?'dp':'dn'}">${d>=0?'+':''}${fD(d)} (${d>=0?'+':''}${p.toFixed(1)}%)</span>`;
+};
+
+function stockChip(stock, nec) {
+  if (!nec) return {cls:'chip-ok', lbl:'n/a', cob:1};
+  const c = stock/nec;
+  return c>=1 ? {cls:'chip-ok', lbl:(c*100).toFixed(0)+'%', cob:c}
+       : c>=.7 ? {cls:'chip-warn', lbl:(c*100).toFixed(0)+'%', cob:c}
+       : {cls:'chip-bad', lbl:(c*100).toFixed(0)+'%', cob:c};
+}
+
+function toast(msg, color='var(--accent2)') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  t.style.borderColor = color;
+  t.style.color = color;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.style.display='none', 2200);
+}
+
+// ── LOAD WINE LIST ─────────────────────────────────────────────────────
+let currentCorteId = null;
+let filterEstado = new Set(), filterRev = new Set(), filterEnol = new Set();
+let filterCal = new Set(), filterVar = new Set(), filterColor = new Set();
+let stockBodSet = new Set(), stockSort = 'apt';
+let wineSearch = '';
+const matchF = (set, val) => set.size === 0 || set.has(val);
+function toggleFilter(set, val, fn) {
+  if (val === 'todos') set.clear();
+  else { if (set.has(val)) set.delete(val); else set.add(val); }
+  fn();
+}
+function toggleFilter(set, val, fn) {
+  if (val === 'todos') set.clear(); else { if(set.has(val)) set.delete(val); else set.add(val); }
+  fn();
+}
+
+async function loadCortes() {
+  const r = await fetch('/api/stock/cortes/todos/');
+  const cortes = await r.json();
+  const sel = document.getElementById('sel-corte');
+  sel.innerHTML = '';
+  if (!cortes.length) { sel.innerHTML = '<option value="">Sin cortes</option>'; return; }
+  cortes.forEach((c, i) => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.descripcion + ' (' + c.n_materiales + ' mat.)';
+    if (i === 0) { opt.selected = true; currentCorteId = c.id; }
+    sel.appendChild(opt);
+  });
+}
+document.getElementById('sel-corte')?.addEventListener('change', e => { currentCorteId = e.target.value||null; });
+document.getElementById('btn-recalcular')?.addEventListener('click', async () => {
+  if (!currentCodigo) { toast('Selecciona un vino primero','var(--warn)'); return; }
+  const btn = document.getElementById('btn-recalcular');
+  btn.textContent='↻ …'; btn.disabled=true;
+  await selectWine(currentCodigo);
+  btn.textContent='↻'; btn.disabled=false;
+  toast('✓ Precios y stock actualizados');
+});
+
+function populateDynamicFilters() {
+  const enols = [...new Set(allWines.map(w=>w.enologo).filter(Boolean))].sort();
+  const cals  = [...new Set(allWines.map(w=>w.calidad).filter(Boolean))].sort();
+  const vars  = [...new Set(allWines.map(w=>w.variedad_principal_4d).filter(Boolean))].sort();
+
+  const fill = (barId, values, filterSet) => {
+    const bar = document.getElementById(barId);
+    if (!bar) return;
+    const todosBtn = bar.querySelector('.fbtn');
+    if (todosBtn && !todosBtn._wired) {
+      todosBtn._wired = true;
+      todosBtn.addEventListener('click', () => {
+        filterSet.clear();
+        bar.querySelectorAll('.fbtn').forEach(b => b.classList.toggle('active', b===todosBtn));
+        renderWineList();
+      });
+    }
+    bar.querySelectorAll('[data-dynamic]').forEach(b => b.remove());
+    values.forEach(v => {
+      const b = document.createElement('button');
+      b.className = 'fbtn'; b.dataset.dynamic = '1'; b.textContent = v;
+      b.classList.toggle('active', filterSet.has(v));
+      b.addEventListener('click', () => {
+        toggleFilter(filterSet, v, renderWineList);
+        if (todosBtn) todosBtn.classList.toggle('active', filterSet.size===0);
+        b.classList.toggle('active', filterSet.has(v));
+      });
+      bar.appendChild(b);
+    });
+    if (todosBtn) todosBtn.classList.toggle('active', filterSet.size===0);
+  };
+  fill('fbar-enol', enols, filterEnol);
+  fill('fbar-cal',  cals,  filterCal);
+  fill('fbar-var',  vars,  filterVar);
+}
+
+function populateBodegaFilter() {
+  const bodSet=new Set();
+  allStock.forEach(s=>{ if(s.bodegas&&s.bodegas.length) s.bodegas.forEach(b=>b&&bodSet.add(b)); else if(s.bodega) bodSet.add(s.bodega); });
+  const bodegas=[...bodSet].sort();
+  const bar=document.getElementById('fbar-bod'); if(!bar) return;
+  const todosBtn=bar.querySelector('.fbtn');
+  if(todosBtn&&!todosBtn._wired){ todosBtn._wired=true;
+    todosBtn.addEventListener('click',()=>{ toggleFilter(stockBodSet,'todos',renderStockList);
+      bar.querySelectorAll('.fbtn').forEach(b=>b.classList.toggle('active',b===todosBtn&&stockBodSet.size===0)); }); }
+  bar.querySelectorAll('[data-dynamic]').forEach(b=>b.remove());
+  bodegas.forEach(bod=>{ const b=document.createElement('button'); b.className='fbtn'; b.dataset.sfBod=bod; b.dataset.dynamic='1'; b.textContent=bod;
+    b.classList.toggle('active',stockBodSet.has(bod));
+    b.addEventListener('click',()=>{ toggleFilter(stockBodSet,bod,renderStockList);
+      if(todosBtn) todosBtn.classList.toggle('active',stockBodSet.size===0);
+      b.classList.toggle('active',stockBodSet.has(bod)); });
+    bar.appendChild(b); });
+  if(todosBtn) todosBtn.classList.toggle('active',stockBodSet.size===0);
+}
+
+async function loadWineList() {
+  const params = new URLSearchParams({temporada: getTemporada()});
+  const r = await fetch('/api/vinos/?' + params);
+  allWines = await r.json();
+  populateDynamicFilters();
+  renderWineList();
+}
+
+function renderWineList() {
+  const q = wineSearch.toLowerCase();
+  const list = document.getElementById('wine-list');
+  list.innerHTML = '';
+  const filtered = allWines.filter(w => {
+    if(q && !String(w.codigo).includes(q) && !w.descripcion.toLowerCase().includes(q)) return false;
+    if(!matchF(filterEstado, w.estado_mezcla||w.estado)) return false;
+    if(!matchF(filterRev, w.revision)) return false;
+    if(!matchF(filterEnol, w.enologo)) return false;
+    if(!matchF(filterCal, w.calidad)) return false;
+    if(!matchF(filterVar, w.variedad_principal_4d||'')) return false;
+    if(!matchF(filterColor, w.color)) return false;
+    return true;
+  });
+  filtered.forEach(w => {
+    const div = document.createElement('div');
+    div.className = 'wine-item' + (w.estado==='descontinuado'?' desc':'') + (w.codigo===currentCodigo?' active':'');
+    div.innerHTML = `
+      <div class="wi-code">${w.codigo}</div>
+      <div class="wi-body">
+        <div class="wi-name">${w.descripcion}</div>
+        <div class="wi-meta">
+          <span class="badge badge-${w.calidad}">${w.calidad}</span>
+          <span class="wi-nec">${w.necesidad>0?fN(w.necesidad)+' L':'—'}</span>
+        </div>
+      </div>
+      <div class="wi-right">
+        <div class="rev-dot rev-${w.revision}" title="${w.revision}"></div>
+      </div>`;
+    div.addEventListener('click', () => selectWine(w.codigo));
+    list.appendChild(div);
+  });
+}
+
+document.getElementById('wine-search').addEventListener('input', e => { wineSearch=e.target.value; renderWineList(); });
+
+// Filter buttons
+// ── FILTER LISTENERS (wine list) ─────────────────────────────────────
+document.querySelectorAll('[data-f-estado]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    toggleFilter(filterEstado, btn.dataset.fEstado, renderWineList);
+    document.querySelectorAll('[data-f-estado]').forEach(b => {
+      b.classList.toggle('active', b.dataset.fEstado==='todos'
+        ? filterEstado.size===0 : filterEstado.has(b.dataset.fEstado));
+    });
+  });
+});
+document.querySelectorAll('[data-f-rev]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    toggleFilter(filterRev, btn.dataset.fRev, renderWineList);
+    document.querySelectorAll('[data-f-rev]').forEach(b => {
+      b.classList.toggle('active', b.dataset.fRev==='todos'
+        ? filterRev.size===0 : filterRev.has(b.dataset.fRev));
+    });
+  });
+});
+document.querySelectorAll('[data-f-color]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    toggleFilter(filterColor, btn.dataset.fColor, renderWineList);
+    document.querySelectorAll('[data-f-color]').forEach(b => {
+      b.classList.toggle('active', b.dataset.fColor==='todos'
+        ? filterColor.size===0 : filterColor.has(b.dataset.fColor));
+    });
+  });
+});
+
+// ── SELECT WINE ───────────────────────────────────────────────────────
+async function selectWine(codigo) {
+  currentCodigo = codigo;
+  pendingChanges = {};
+  const corteId = getCorteId();
+  const params = new URLSearchParams({temporada:getTemporada(), ref_temporada:getRef()});
+  if (corteId) params.append('corte_id', corteId);
+  const r = await fetch('/api/vinos/' + codigo + '/?' + params);
+  if (!r.ok) { toast('Error al cargar vino: ' + r.status, 'var(--danger)'); return; }
+  currentWine = await r.json();
+  if (!currentWine || !currentWine.vino) { toast('Respuesta inválida del servidor', 'var(--danger)'); return; }
+
+  document.getElementById('empty-msg').style.display = 'none';
+  document.getElementById('wine-editor').classList.add('open');
+  document.getElementById('btn-guardar').style.display = '';
+  document.getElementById('btn-reset').style.display = '';
+
+  const v = currentWine.vino;
+  document.getElementById('eh-title').textContent = `${v.codigo} — ${v.descripcion}`;
+  document.getElementById('eh-meta').innerHTML = `
+    <span class="badge badge-${v.calidad}">${v.calidad}</span>
+    <span>${v.color==='B'?'Blanco':'Tinto'}</span>
+    <span>${v.enologo}</span>
+    <span>${v.necesidad>0?'Necesidad: '+fN(v.necesidad)+' L':'Sin necesidad'}</span>
+    <span style="color:${v.estado==='descontinuado'?'var(--danger)':'var(--muted)'};">${v.estado}</span>
+  `;
+
+  // Revision selector
+  const revSel = document.getElementById('rev-sel');
+  revSel.innerHTML = ['pendiente','revisado','validado'].map(r2=>
+    `<button class="rev-btn ${v.revision===r2?'active-'+r2:''}" data-rev="${r2}">${r2}</button>`
+  ).join('');
+  revSel.querySelectorAll('.rev-btn').forEach(b => {
+    b.addEventListener('click', async () => {
+      await setRevision(b.dataset.rev);
+      revSel.querySelectorAll('.rev-btn').forEach(x=>x.className='rev-btn');
+      b.className = `rev-btn active-${b.dataset.rev}`;
+      currentWine.vino.revision = b.dataset.rev;
+      renderWineList();
+    });
+  });
+
+  document.getElementById('notas-ta').value = v.notas || '';
+
+  // Init pending from current componentes
+  currentWine.componentes.forEach(c => {
+    pendingChanges[c.material_codigo] = c.participacion;
+  });
+
+  renderWineList();
+  loadStock();
+  renderConfig();
+  updateSumPill();
+
+  const ep = document.querySelector('.etab.active')?.dataset.ep;
+  if (ep==='resumen') renderResumen();
+  if (ep==='global') loadGlobal();
+}
+
+// ── REVISION / NOTAS ─────────────────────────────────────────────────
+async function setRevision(rev) {
+  await fetch(`/api/vinos/${currentCodigo}/estado/`, {
+    method:'PATCH', headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},
+    body: JSON.stringify({revision: rev})
+  });
+  toast(`Marcado como ${rev}`, rev==='validado'?'var(--accent2)':rev==='revisado'?'var(--blue)':'var(--warn)');
+}
+
+document.getElementById('btn-save-notas').addEventListener('click', async () => {
+  const notas = document.getElementById('notas-ta').value;
+  await fetch(`/api/vinos/${currentCodigo}/estado/`, {
+    method:'PATCH', headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},
+    body: JSON.stringify({notas})
+  });
+  toast('Notas guardadas');
+});
+
+// ── RENDER CONFIG ─────────────────────────────────────────────────────
+function renderConfig() {
+  if (!currentWine) return;
+  const comps = currentWine.componentes;
+  const vino = currentWine.vino;
+  const list = document.getElementById('comp-list');
+  list.innerHTML = '';
+
+  const sorted = [...comps].sort((a,b) => (a.aptitud===b.aptitud?0:a.aptitud?-1:1)
+    || (pendingChanges[b.material_codigo]||0)-(pendingChanges[a.material_codigo]||0));
+
+  sorted.forEach(c => {
+    const pct = pendingChanges[c.material_codigo] ?? c.participacion;
+    const nec = vino.necesidad * pct;
+    const {cls, lbl, cob} = stockChip(c.stock_litros, nec);
+    const fillPct = Math.min(100, cob*100);
+    const fillCol = cob>=1?'var(--accent2)':cob>=.7?'var(--warn)':'var(--danger)';
+
+    const card = document.createElement('div');
+    card.className = 'comp-card' + (c.aptitud?' apt':'');
+    card.dataset.mat = c.material_codigo;
+    card.innerHTML = `
+      <div class="cc-top">
+        <div>
+          <div class="cc-name">${c.descripcion}${c.aptitud?' <span class="chip chip-apt" style="font-size:.53rem">⭐</span>':''}</div>
+          <div class="cc-mat">Mat: ${c.material_codigo} · ${c.variedad||'—'} · ${c.valle||'—'}</div>
+        </div>
+        <div class="cc-right">
+          <span class="cc-precio">$${fD(c.costo_litro)}/L</span>
+          <button class="cc-rm" data-mat="${c.material_codigo}" title="Quitar">✕</button>
+        </div>
+      </div>
+      <div class="cc-body">
+        <div class="years-row">
+          <div><div class="yr-lbl">Ref ${getRefLabel()}</div><div class="yr-val">${fP(c.participacion_ref||0)}</div></div>
+          <div><div class="yr-lbl">${getConfigLabel()} vigente</div><div class="yr-val">${fP(c.participacion)}</div></div>
+          <div><div class="yr-lbl">${getNewLabel()} (nueva)</div><div class="yr-val new">${fP(pct)}</div></div>
+        </div>
+        <div class="slider-row">
+          <input type="range" min="0" max="100" step="0.1" value="${(pct*100).toFixed(1)}" data-mat="${c.material_codigo}">
+          <input type="text" class="pct-inp" value="${(pct*100).toFixed(2)}" data-mat="${c.material_codigo}">
+          <span class="pct-unit">%</span>
+        </div>
+        <div class="stk-bar"><div class="stk-fill" style="width:${fillPct}%;background:${fillCol};"></div></div>
+        <div class="stk-labels">
+          <span>Stock: ${fN(c.stock_litros)} L | Nec: ${fN(Math.round(nec))} L</span>
+          <span class="chip ${cls}">${lbl}</span>
+        </div>
+        <div class="stk-nec-global">Nec. global (todos los vinos): ${fN(c.nec_acumulada_global)} L</div>
+      </div>`;
+    list.appendChild(card);
+  });
+
+  // events
+  list.querySelectorAll('input[type=range]').forEach(sl => {
+    sl.addEventListener('input', e => {
+      const mat = parseInt(e.target.dataset.mat);
+      pendingChanges[mat] = parseFloat(e.target.value)/100;
+      updateCardDisplay(mat); updateSumPill(); updateVarChart();
+    });
+  });
+  list.querySelectorAll('.pct-inp').forEach(inp => {
+    inp.addEventListener('change', e => {
+      const mat = parseInt(e.target.dataset.mat);
+      pendingChanges[mat] = (parseFloat(e.target.value.replace(',','.'))||0)/100;
+      updateCardDisplay(mat); updateSumPill(); updateVarChart();
+    });
+  });
+  list.querySelectorAll('.cc-rm').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const mat = parseInt(e.target.closest('.cc-rm').dataset.mat);
+      currentWine.componentes = currentWine.componentes.filter(c=>c.material_codigo!==mat);
+      delete pendingChanges[mat];
+      renderConfig(); updateSumPill(); updateVarChart();
+    });
+  });
+
+  updateVarChart();
+}
+
+function updateCardDisplay(mat) {
+  if (!currentWine) return;
+  const c = currentWine.componentes.find(c=>c.material_codigo===mat);
+  if (!c) return;
+  const pct = pendingChanges[mat] ?? c.participacion;
+  const card = document.querySelector(`.comp-card[data-mat="${mat}"]`);
+  if (!card) return;
+  const sl = card.querySelector('input[type=range]');
+  const inp = card.querySelector('.pct-inp');
+  if (sl) sl.value = (pct*100).toFixed(1);
+  if (inp) inp.value = (pct*100).toFixed(2);
+  card.querySelectorAll('.yr-val')[2].textContent = fP(pct);
+
+  const nec = currentWine.vino.necesidad * pct;
+  const {cls, lbl, cob} = stockChip(c.stock_litros, nec);
+  const fillPct = Math.min(100, cob*100);
+  const fillCol = cob>=1?'var(--accent2)':cob>=.7?'var(--warn)':'var(--danger)';
+  const fill = card.querySelector('.stk-fill');
+  if (fill) { fill.style.width=fillPct+'%'; fill.style.background=fillCol; }
+  const lbls = card.querySelectorAll('.stk-labels span');
+  if (lbls[0]) lbls[0].textContent=`Stock: ${fN(c.stock_litros)} L | Nec: ${fN(Math.round(nec))} L`;
+  if (lbls[1]) { lbls[1].className=`chip ${cls}`; lbls[1].textContent=lbl; }
+}
+
+// ── VARIEDAD CHART ────────────────────────────────────────────────────
+const COLORS = ['#c9a96d','#7ab87a','#5b8dd9','#b87fc7','#cc9a42','#7a9fc7','#cc5a52','#72bcb8','#a0cc72','#c87c6e','#8dd9b8','#d98b5b'];
+
+function updateVarChart() {
+  if (!currentWine) return;
+  const varNueva = {}, varRef = {};
+  currentWine.componentes.forEach(c => {
+    const v = c.variedad || 'Sin variedad';
+    const pct = pendingChanges[c.material_codigo] ?? c.participacion;
+    varNueva[v] = (varNueva[v]||0) + pct;
+    varRef[v] = (varRef[v]||0) + (c.participacion_ref||0);
+  });
+
+  const sorted = Object.entries(varNueva).sort((a,b)=>b[1]-a[1]);
+  const maxPct = Math.max(...sorted.map(([,v])=>v), 0.001);
+
+  const chart = document.getElementById('var-chart');
+  chart.innerHTML = '';
+  sorted.forEach(([name, pct], i) => {
+    const bar = document.createElement('div');
+    bar.className = 'var-row';
+    bar.innerHTML = `
+      <div class="var-name" title="${name}">${name}</div>
+      <div class="var-bar-wrap"><div class="var-bar-fill" style="width:${(pct/maxPct*100).toFixed(0)}%;background:${COLORS[i%COLORS.length]};"></div></div>
+      <div class="var-pct">${(pct*100).toFixed(1)}%</div>`;
+    chart.appendChild(bar);
+  });
+
+  // comparison
+  const cmp = document.getElementById('var-cmp');
+  cmp.innerHTML = '';
+  const allVars = new Set([...Object.keys(varNueva), ...Object.keys(varRef)]);
+  Array.from(allVars).sort().forEach(v => {
+    const nueva = varNueva[v]||0;
+    const ref = varRef[v]||0;
+    const delta = nueva - ref;
+    const row = document.createElement('div');
+    row.className = 'var-row';
+    row.innerHTML = `
+      <div class="var-name" title="${v}">${v}</div>
+      <div style="flex:1;font-size:.6rem;color:var(--muted2)">${(nueva*100).toFixed(1)}%</div>
+      <div style="font-size:.6rem;" class="${delta>0.001?'dp':delta<-0.001?'dn':''}">
+        ${delta>0.001?'▲':delta<-0.001?'▼':'='} ${(ref*100).toFixed(1)}%
+      </div>`;
+    cmp.appendChild(row);
+  });
+}
+
+// ── SUM PILL ──────────────────────────────────────────────────────────
+function updateSumPill() {
+  if (!currentWine) return;
+  const sum = Object.values(pendingChanges).reduce((a,b)=>a+b,0);
+  const pct = (sum*100).toFixed(1);
+  const ok = Math.abs(sum-1) < 0.001;
+  const pill = document.getElementById('sum-pill');
+  pill.style.display = '';
+  pill.className = 'sum-pill ' + (ok?'sum-ok':'sum-bad');
+  pill.textContent = ok ? `✓ ${pct}%` : `⚠ ${pct}%`;
+}
+
+// ── GUARDAR ───────────────────────────────────────────────────────────
+document.getElementById('btn-guardar').addEventListener('click', async () => {
+  if (!currentCodigo) return;
+  const componentes = Object.entries(pendingChanges)
+    .filter(([,pct])=>pct>0)
+    .map(([mat,pct])=>({material_codigo:parseInt(mat), participacion:pct}));
+
+  const r = await fetch(`/api/vinos/${currentCodigo}/guardar/`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},
+    body: JSON.stringify({temporada_id:parseInt(getTemporada()), componentes})
+  });
+  if (r.ok) {
+    toast('✓ Configuración guardada', 'var(--accent2)');
+    await selectWine(currentCodigo);
+  } else {
+    toast('Error al guardar', 'var(--danger)');
+  }
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  if (!currentWine) return;
+  pendingChanges = {};
+  currentWine.componentes.forEach(c => { pendingChanges[c.material_codigo]=c.participacion; });
+  renderConfig(); updateSumPill();
+});
+
+// ── LOAD STOCK ────────────────────────────────────────────────────────
+let stockFilter = 'all', stockSearch = '';
+
+async function loadStock() {
+  const cid = getCorteId();
+  const sparams = new URLSearchParams({temporada:getTemporada(), vino:currentCodigo||''});
+  if (cid) sparams.append('corte_id', cid);
+  const r = await fetch('/api/stock/?' + sparams);
+  allStock = await r.json();
+  populateBodegaFilter();
+  renderStockList();
+}
+
+function renderStockList() {
+  const list = document.getElementById('stock-list');
+  const q = stockSearch.toLowerCase();
+  list.innerHTML = '';
+  allStock
+    .filter(s => {
+      if (stockFilter==='apt' && !s.is_apt) return false;
+      if (stockFilter==='B' && s.color!=='B') return false;
+      if (stockFilter==='T' && s.color!=='T') return false;
+      if (stockBodSet.size > 0) {
+        const mb = s.bodegas && s.bodegas.length ? s.bodegas : (s.bodega ? [s.bodega] : []);
+        if (!mb.some(b => stockBodSet.has(b))) return false;
+      }
+      if (stockSearch) {
+        const q = stockSearch.toLowerCase();
+        const bods = (s.bodegas||[s.bodega||'']).join(' ').toLowerCase();
+        if (!String(s.material_codigo).includes(q) && !s.descripcion.toLowerCase().includes(q)
+            && !(s.valle||'').toLowerCase().includes(q) && !bods.includes(q)) return false;
+      }
+      return true;
+    })
+    .sort((a,b)=>{
+      if(stockSort==='precio_asc')  return (a.precio_litro||0)-(b.precio_litro||0);
+      if(stockSort==='precio_desc') return (b.precio_litro||0)-(a.precio_litro||0);
+      if(stockSort==='stock_asc')   return (a.stock_litros||0)-(b.stock_litros||0);
+      if(stockSort==='stock_desc')  return (b.stock_litros||0)-(a.stock_litros||0);
+      if(a.is_apt!==b.is_apt) return a.is_apt?-1:1;
+      return (b.stock_litros||0)-(a.stock_litros||0);
+    })
+    .forEach(s => {
+      const div = document.createElement('div');
+      div.className = 'stock-item' + (s.is_apt?' apt':'');
+      div.innerHTML = `
+        <div class="si-top">
+          <span class="si-cod">${s.material_codigo}</span>
+          <span class="si-stock">${fN(
+            stockBodSet.size===1
+              ? (s.litros_por_bodega&&s.litros_por_bodega[[...stockBodSet][0]]
+                  ? s.litros_por_bodega[[...stockBodSet][0]]
+                  : s.stock_litros)
+              : s.stock_litros
+          )} L${stockBodSet.size===1&&s.bodegas&&s.bodegas.length>1?' *':''}</span>
+        </div>
+        <div class="si-name">${s.descripcion}${s.is_apt?' <span class="chip chip-apt" style="font-size:.52rem">⭐</span>':''}</div>
+        <div class="si-meta">
+          <span>${s.valle||'—'}</span>
+          <span>${s.variedad||'—'}</span>
+          <span class="badge badge-${s.calidad||'BL'}">${s.calidad||'?'}</span>
+          <span class="si-precio">$${fD(s.precio_litro)}/L</span>
+        </div>
+        <div style="font-size:.55rem;color:var(--blue);margin-top:1px;">🏠 ${s.bodegas&&s.bodegas.length>1?s.bodegas.join(', '):(s.bodega||'—')}</div>
+        <div style="font-size:.52rem;color:var(--muted);margin-top:1px;">🔍 clic para ver stock por cosecha</div>`;
+      div.addEventListener('click', () => openStockModal(s));
+      list.appendChild(div);
+    });
+}
+
+document.querySelectorAll('[data-sf]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-sf]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); stockFilter=btn.dataset.sf; renderStockList();
+  });
+});
+document.getElementById('stock-search').addEventListener('input', e => { stockSearch=e.target.value; renderStockList(); });
+
+// ── STOCK MODAL ───────────────────────────────────────────────────────
+async function openStockModal(s) {
+  modalStockItem = s;
+  const alreadyIn = currentWine?.componentes.some(c=>c.material_codigo===s.material_codigo);
+  document.getElementById('ms-title').textContent = s.descripcion;
+  document.getElementById('ms-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      <div><div style="font-size:.57rem;color:var(--muted);margin-bottom:2px">MATERIAL</div><div style="color:var(--accent)">${s.material_codigo}</div></div>
+      <div><div style="font-size:.57rem;color:var(--muted);margin-bottom:2px">STOCK</div><div style="color:var(--accent2)">${fN(s.stock_litros)} L</div></div>
+      <div><div style="font-size:.57rem;color:var(--muted);margin-bottom:2px">PRECIO $/L</div><div style="color:var(--warn)">$${fD(s.precio_litro)}</div></div>
+      <div><div style="font-size:.57rem;color:var(--muted);margin-bottom:2px">VARIEDAD</div><div>${s.variedad||'—'}</div></div>
+      <div><div style="font-size:.57rem;color:var(--muted);margin-bottom:2px">VALLE</div><div>${s.valle||'—'}</div></div>
+      <div><div style="font-size:.57rem;color:var(--muted);margin-bottom:2px">CALIDAD</div><div><span class="badge badge-${s.calidad||'BL'}">${s.calidad||'?'}</span></div></div>
+    </div>
+    ${s.is_apt?'<div class="chip chip-apt" style="margin-bottom:8px">⭐ Aptitud preferencial para este vino</div>':''}
+    ${alreadyIn?'<div style="font-size:.66rem;color:var(--warn);margin-top:6px">⚠ Ya está en la mezcla</div>':''}
+    <div style="font-size:.58rem;color:var(--muted);margin-top:8px">Aptitud: ${(s.aptitud_vinos||[]).join(', ')||'—'}</div>
+  `;
+  document.getElementById('ms-add-btn').disabled = !currentCodigo;
+  document.getElementById('modal-stock').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal-stock').classList.remove('open'); }
+
+document.getElementById('ms-add-btn').addEventListener('click', () => {
+  if (!currentWine || !modalStockItem) return;
+  const s = modalStockItem;
+  if (!currentWine.componentes.some(c=>c.material_codigo===s.material_codigo)) {
+    currentWine.componentes.push({
+      material_codigo: s.material_codigo,
+      descripcion: s.descripcion,
+      variedad: s.variedad,
+      calidad: s.calidad,
+      valle: s.valle,
+      color: s.color,
+      participacion: 0,
+      participacion_ref: 0,
+      costo_litro: s.precio_litro,
+      stock_litros: s.stock_litros,
+      aptitud: s.is_apt,
+      nec_acumulada_global: 0,
+    });
+    pendingChanges[s.material_codigo] = 0;
+  }
+  closeModal();
+  renderConfig(); updateSumPill(); updateVarChart();
+});
+
+// ── RESUMEN ───────────────────────────────────────────────────────────
+function renderResumen() {
+  if (!currentWine) return;
+  const vino = currentWine.vino;
+  const comps = currentWine.componentes;
+  const wrap = document.getElementById('resumen-wrap');
+  wrap.innerHTML = '';
+
+  const cNueva = comps.reduce((s,c)=>s+(pendingChanges[c.material_codigo]??c.participacion)*c.costo_litro, 0);
+  const cRef = comps.reduce((s,c)=>s+(c.participacion)*c.costo_litro, 0);
+  const cAnt = comps.reduce((s,c)=>s+(c.participacion_ref||0)*c.costo_litro, 0);
+  const delta = cNueva-cRef;
+  let nOk=0,nW=0,nB=0;
+  comps.forEach(c=>{
+    const pct=pendingChanges[c.material_codigo]??c.participacion;
+    if(!pct) return;
+    const {cob}=stockChip(c.stock_litros, vino.necesidad*pct);
+    if(cob>=1)nOk++; else if(cob>=.7)nW++; else nB++;
+  });
+
+  const kpis = document.createElement('div'); kpis.className='kpi-grid';
+  kpis.innerHTML = `
+    <div class="kpi"><div class="kpi-lbl">$/L ${getConfigLabel()} (nueva)</div>
+      <div class="kpi-val" style="color:var(--accent)">$${fD(cNueva)}</div>
+      <div class="kpi-delta">${fDP(cNueva,cRef)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">$/L Vigente ${getRefLabel()}</div>
+      <div class="kpi-val" style="color:var(--muted2)">$${fD(cRef)}</div>
+      <div class="kpi-sub">Estándar actual</div></div>
+    <div class="kpi"><div class="kpi-lbl">$/L Referencia</div>
+      <div class="kpi-val" style="color:var(--muted)">$${fD(cAnt)}</div>
+      <div class="kpi-sub">Año anterior</div></div>
+    <div class="kpi"><div class="kpi-lbl">Stock</div>
+      <div class="kpi-val" style="color:${nB>0?'var(--danger)':nW>0?'var(--warn)':'var(--accent2)'}">
+        ${nB>0?'✗':nW>0?'⚠':'✓'}</div>
+      <div class="kpi-sub">✓${nOk} △${nW} ✗${nB}</div></div>`;
+  wrap.appendChild(kpis);
+
+  const sl = document.createElement('div'); sl.className='sec-lbl'; sl.textContent='Componentes'; wrap.appendChild(sl);
+
+  const tbl = document.createElement('table'); tbl.className='comp-tbl';
+  tbl.innerHTML=`<thead><tr>
+    <th>Componente</th><th>Variedad</th>
+    <th>Ref.</th><th>Vigente</th><th>Nueva</th>
+    <th>$/L</th><th>Contrib</th>
+    <th>Nec.L</th><th>Stock L</th><th>Nec.Global L</th><th>Cob.</th>
+  </tr></thead>`;
+  const tb=document.createElement('tbody');
+  comps.forEach(c=>{
+    const pct=pendingChanges[c.material_codigo]??c.participacion;
+    const nec=vino.necesidad*pct;
+    const {cls,lbl}=stockChip(c.stock_litros,nec);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="max-width:160px;line-height:1.2;font-size:.63rem">${c.descripcion}${c.aptitud?' <span class="chip chip-apt" style="font-size:.5rem">⭐</span>':''}</td>
+      <td style="color:var(--muted);font-size:.62rem">${c.variedad||'—'}</td>
+      <td style="color:var(--muted)">${fP(c.participacion_ref||0)}</td>
+      <td style="color:var(--muted2)">${fP(c.participacion)}</td>
+      <td style="color:var(--accent);font-weight:500">${fP(pct)}</td>
+      <td>$${fD(c.costo_litro)}</td>
+      <td style="color:var(--accent)">$${fD(pct*c.costo_litro)}</td>
+      <td>${fN(Math.round(nec))}</td>
+      <td>${fN(c.stock_litros)}</td>
+      <td style="color:var(--muted2)">${fN(c.nec_acumulada_global)}</td>
+      <td><span class="chip ${cls}">${lbl}</span></td>`;
+    tb.appendChild(tr);
+  });
+  tbl.appendChild(tb); wrap.appendChild(tbl);
+
+  const sl2=document.createElement('div'); sl2.className='sec-lbl'; sl2.textContent='Distribución por variedad'; wrap.appendChild(sl2);
+  const cb=document.createElement('div'); cb.className='chart-box';
+  const canvas=document.createElement('canvas'); canvas.id='res-canvas';
+  cb.appendChild(canvas); wrap.appendChild(cb);
+
+  if(chartInst){chartInst.destroy();chartInst=null;}
+  const varData={};
+  comps.forEach(c=>{
+    const v=c.variedad||'Sin variedad';
+    varData[v]=(varData[v]||0)+(pendingChanges[c.material_codigo]??c.participacion);
+  });
+  const labels=Object.keys(varData), vals=Object.values(varData).map(v=>+(v*100).toFixed(2));
+  chartInst=new Chart(canvas.getContext('2d'),{
+    type:'doughnut',
+    data:{labels, datasets:[{data:vals, backgroundColor:COLORS.slice(0,labels.length), borderWidth:1, borderColor:'#1f1d1b'}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'right',labels:{color:'#8a8480',font:{family:'DM Mono',size:9},boxWidth:10}},
+        tooltip:{backgroundColor:'#161513',borderColor:'#2a2826',borderWidth:1,titleColor:'#e5dfd7',bodyColor:'#c9a96d',
+          callbacks:{label:ctx=>` ${ctx.label}: ${ctx.parsed.toFixed(1)}%`}}}}
+  });
+}
+
+// ── GLOBAL TABLE ──────────────────────────────────────────────────────
+let globalData=[], globalFiltroEstado='todos', globalFiltroRev='todos';
+
+async function loadGlobal() {
+  const params=new URLSearchParams({temporada:getTemporada(),ref_temporada:getRef()});
+  const r=await fetch(`/api/resumen/?${params}`);
+  globalData=await r.json();
+  renderGlobal();
+}
+
+function renderGlobal() {
+  const tbody=document.getElementById('global-tbody');
+  tbody.innerHTML='';
+  const filtered=globalData.filter(w=>{
+    if(globalFiltroEstado!=='todos'&&w.estado!==globalFiltroEstado) return false;
+    if(globalFiltroRev!=='todos'&&w.revision!==globalFiltroRev) return false;
+    return true;
+  });
+  filtered.forEach(w=>{
+    const tr=document.createElement('tr');
+    if(w.codigo===currentCodigo) tr.className='cur';
+    const dCls=w.delta>0?'dp':'dn';
+    tr.innerHTML=`
+      <td style="color:var(--accent);font-weight:500">${w.codigo}</td>
+      <td style="max-width:180px;font-size:.63rem;line-height:1.2">${w.descripcion}</td>
+      <td><span class="badge badge-${w.calidad}">${w.calidad}</span></td>
+      <td>${w.necesidad>0?fN(w.necesidad):'<span style="color:var(--muted)">—</span>'}</td>
+      <td style="color:var(--muted)">${w.costo_ref?'$'+fD(w.costo_ref):'—'}</td>
+      <td style="color:var(--accent)">${w.costo_nueva?'$'+fD(w.costo_nueva):'—'}</td>
+      <td class="${dCls}">${w.delta?((w.delta>0?'+':'')+'$'+fD(w.delta)):'—'}</td>
+      <td class="${dCls}">${w.delta_pct?((w.delta_pct>0?'+':'')+w.delta_pct+'%'):'—'}</td>
+      <td style="color:var(--accent2)">${w.stock_ok}</td>
+      <td style="color:${w.stock_warn?'var(--warn)':'var(--muted)'}">${w.stock_warn}</td>
+      <td style="color:${w.stock_bad?'var(--danger)':'var(--muted)'}">${w.stock_bad}</td>
+      <td><span class="rev-dot rev-${w.revision}" style="display:inline-block;margin-right:4px"></span>${w.revision}</td>`;
+    tr.addEventListener('click',()=>selectWine(w.codigo));
+    tbody.appendChild(tr);
+  });
+}
+
+document.querySelectorAll('[data-gf]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('[data-gf]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); globalFiltroEstado=btn.dataset.gf; renderGlobal();
+  });
+});
+document.querySelectorAll('[data-gr]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('[data-gr]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); globalFiltroRev=btn.dataset.gr; renderGlobal();
+  });
+});
+
+// ── TOP SEARCH ────────────────────────────────────────────────────────
+const topS=document.getElementById('top-search'), topD=document.getElementById('top-dd');
+topS.addEventListener('input',()=>{
+  const q=topS.value.toLowerCase().trim();
+  if(!q){topD.style.display='none';return;}
+  const res=allWines.filter(w=>String(w.codigo).includes(q)||w.descripcion.toLowerCase().includes(q)).slice(0,12);
+  if(!res.length){topD.style.display='none';return;}
+  topD.innerHTML=res.map(w=>`<div class="dd-row" data-code="${w.codigo}">
+    <span style="color:var(--accent);min-width:34px">${w.codigo}</span>
+    <span style="flex:1;font-size:.68rem">${w.descripcion}</span>
+    <span class="badge badge-${w.calidad}">${w.calidad}</span>
+    <div class="rev-dot rev-${w.revision}" style="display:inline-block;margin-left:4px"></div>
+  </div>`).join('');
+  topD.style.display='block';
+  topD.querySelectorAll('.dd-row').forEach(el=>{
+    el.addEventListener('click',()=>{selectWine(parseInt(el.dataset.code));topD.style.display='none';topS.value='';});
+  });
+});
+document.addEventListener('click',e=>{if(!topS.contains(e.target))topD.style.display='none';});
+
+// ── EDITOR TABS ───────────────────────────────────────────────────────
+document.querySelectorAll('.etab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    // only handle editor pane tabs (data-ep), not sub-tabs (data-sp)
+    if(!tab.dataset.ep) return;
+    document.querySelectorAll('[data-ep]').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.epane').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('ep-'+tab.dataset.ep).classList.add('active');
+    if(tab.dataset.ep==='resumen') renderResumen();
+    if(tab.dataset.ep==='global') loadGlobal();
+    if(tab.dataset.ep==='stockprecios') loadSpStock();
+  });
+});
+
+// ── STOCK & PRECIOS SUB-TABS ──────────────────────────────────────────
+let spEvoChart = null;
+
+document.querySelectorAll('[data-sp]').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('[data-sp]').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.sp-pane').forEach(p=>{
+      p.style.display='none'; p.classList.remove('active');
+    });
+    const pane=document.getElementById('sp-'+tab.dataset.sp);
+    pane.style.display='flex'; pane.classList.add('active');
+    if(tab.dataset.sp==='stock') loadSpStock();
+    if(tab.dataset.sp==='historico') loadSpCortes();
+    if(tab.dataset.sp==='precios') loadSpPrecios();
+  });
+});
+
+// ── SP: STOCK VIGENTE ─────────────────────────────────────────────────
+let spStockData = [];
+
+async function loadSpStock() {
+  const t=getTemporada(); if(!t) return;
+  const r=await fetch(`/api/stock/?temporada=${t}`);
+  spStockData=await r.json();
+  // get corte info
+  const rc=await fetch(`/api/stock/cortes/?temporada=${t}`);
+  const cortes=await rc.json();
+  const vigente=cortes.find(c=>c.es_vigente);
+  const lbl=document.getElementById('sp-stock-corte-lbl');
+  if(lbl) lbl.textContent=vigente?`Corte vigente: ${vigente.descripcion} (${vigente.n_materiales} materiales)`:'Sin corte vigente';
+  renderSpStock();
+}
+
+function renderSpStock() {
+  const q=document.getElementById('sp-stock-search').value.toLowerCase();
+  const col=document.getElementById('sp-stock-color').value;
+  const tbody=document.getElementById('sp-stock-tbody');
+  tbody.innerHTML='';
+  spStockData
+    .filter(s=>{
+      if(col && s.color!==col) return false;
+      if(q && !String(s.material_codigo).includes(q) && !s.descripcion.toLowerCase().includes(q)
+         && !s.valle.toLowerCase().includes(q) && !s.variedad.toLowerCase().includes(q)) return false;
+      return true;
+    })
+    .forEach(s=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td style="color:var(--accent);font-weight:500">${s.material_codigo}</td>
+        <td style="font-size:.65rem;line-height:1.2">${s.descripcion}</td>
+        <td style="color:var(--muted)">${s.variedad||'—'}</td>
+        <td style="color:var(--muted)">${s.valle||'—'}</td>
+        <td><span class="badge badge-${s.calidad||'BL'}">${s.calidad||'?'}</span></td>
+        <td style="color:var(--accent2)">${fN(s.stock_litros)}</td>
+        <td style="color:var(--warn)">$${fD(s.precio_litro)}</td>
+        <td style="font-size:.6rem;color:var(--muted)">${(s.aptitud_vinos||[]).slice(0,4).join(', ')}${s.aptitud_vinos?.length>4?'…':''}</td>`;
+      tbody.appendChild(tr);
+    });
+}
+
+document.getElementById('sp-stock-search').addEventListener('input', renderSpStock);
+document.getElementById('sp-stock-color').addEventListener('change', renderSpStock);
+
+// ── SP: HISTORIAL CORTES ──────────────────────────────────────────────
+async function loadSpCortes() {
+  const t=getTemporada(); if(!t) return;
+  const r=await fetch(`/api/stock/cortes/?temporada=${t}`);
+  const cortes=await r.json();
+  const list=document.getElementById('sp-cortes-list');
+  list.innerHTML='';
+  if(!cortes.length){list.innerHTML='<div style="font-size:.7rem;color:var(--muted)">No hay cortes de stock para esta temporada.</div>';return;}
+  cortes.forEach(c=>{
+    const div=document.createElement('div');
+    div.style.cssText='display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:4px;';
+    if(c.es_vigente) div.style.borderColor='var(--accent2)';
+    div.innerHTML=`
+      <div style="flex:1">
+        <div style="font-size:.72rem;color:${c.es_vigente?'var(--accent2)':'var(--text)'};font-weight:${c.es_vigente?'500':'400'}">
+          ${c.descripcion} ${c.es_vigente?'<span style="font-size:.58rem;background:rgba(122,184,122,.15);color:var(--accent2);padding:1px 5px;border-radius:2px;margin-left:4px">VIGENTE</span>':''}
+        </div>
+        <div style="font-size:.6rem;color:var(--muted);margin-top:2px">${c.n_materiales} materiales</div>
+      </div>
+      ${!c.es_vigente?`<button class="btn btn-ghost" data-cid="${c.id}" style="font-size:.6rem;padding:3px 8px;">Usar como vigente</button>`:''}`;
+    list.appendChild(div);
+  });
+  list.querySelectorAll('[data-cid]').forEach(btn=>{
+    btn.addEventListener('click',async()=>{
+      await fetch(`/api/stock/cortes/${btn.dataset.cid}/vigente/`,{
+        method:'POST',headers:{'X-CSRFToken':getCsrf()}
+      });
+      toast('Corte actualizado como vigente');
+      loadSpCortes(); loadSpStock();
+    });
+  });
+}
+
+// ── SP: PRECIOS ───────────────────────────────────────────────────────
+let spPreciosData = [];
+
+async function loadSpPrecios() {
+  const t=getTemporada(); if(!t) return;
+  const r=await fetch(`/api/precios/?temporada=${t}`);
+  spPreciosData=await r.json();
+  renderSpPrecios();
+}
+
+function renderSpPrecios() {
+  const q=document.getElementById('sp-precio-search').value.toLowerCase();
+  const tbody=document.getElementById('sp-precio-tbody');
+  tbody.innerHTML='';
+  spPreciosData
+    .filter(p=>!q||String(p.material_codigo).includes(q)||p.descripcion.toLowerCase().includes(q))
+    .forEach(p=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td style="color:var(--accent)">${p.material_codigo}</td>
+        <td style="font-size:.65rem">${p.descripcion}</td>
+        <td style="color:var(--muted)">${p.variedad||'—'}</td>
+        <td style="color:var(--muted)">${p.valle||'—'}</td>
+        <td style="color:var(--warn);font-weight:500">$${fD(p.precio_litro)}</td>
+        <td style="color:var(--muted)">${p.periodo}</td>
+        <td style="color:var(--muted)">${p.n_historico}</td>
+        <td><button class="btn btn-ghost" data-mat="${p.material_codigo}" data-desc="${p.descripcion}" style="font-size:.58rem;padding:2px 7px;">📈 Ver</button></td>`;
+      tbody.appendChild(tr);
+    });
+  tbody.querySelectorAll('[data-mat]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      // switch to evolutivo tab
+      document.querySelectorAll('[data-sp]').forEach(t=>t.classList.remove('active'));
+      document.querySelector('[data-sp="evolutivo"]').classList.add('active');
+      document.querySelectorAll('.sp-pane').forEach(p=>{p.style.display='none';p.classList.remove('active');});
+      const ep=document.getElementById('sp-evolutivo');
+      ep.style.display='flex'; ep.classList.add('active');
+      document.getElementById('sp-evo-mat').value=btn.dataset.mat;
+      document.getElementById('sp-evo-mat-desc').textContent=btn.dataset.desc;
+      loadSpEvolutivo(btn.dataset.mat);
+    });
+  });
+}
+
+document.getElementById('sp-precio-search').addEventListener('input', renderSpPrecios);
+
+// ── SP: EVOLUTIVO ─────────────────────────────────────────────────────
+document.getElementById('sp-evo-btn').addEventListener('click',()=>{
+  const mat=document.getElementById('sp-evo-mat').value.trim();
+  if(mat) loadSpEvolutivo(mat);
+});
+
+async function loadSpEvolutivo(mat) {
+  const t=getTemporada();
+  const r=await fetch(`/api/precios/evolutivo/?material=${mat}&temporada=${t}`);
+  const data=await r.json();
+  if(!data.length){
+    document.getElementById('sp-evo-tbl-wrap').innerHTML='<div style="font-size:.7rem;color:var(--muted)">Sin datos de precios para este material.</div>';
+    return;
+  }
+
+  document.getElementById('sp-evo-mat-desc').textContent=
+    spPreciosData.find(p=>String(p.material_codigo)===String(mat))?.descripcion||'';
+
+  // Chart
+  const canvas=document.getElementById('sp-evo-chart');
+  if(spEvoChart){spEvoChart.destroy();spEvoChart=null;}
+  spEvoChart=new Chart(canvas.getContext('2d'),{
+    type:'line',
+    data:{
+      labels:data.map(d=>d.periodo),
+      datasets:[{
+        label:'$/Litro',
+        data:data.map(d=>d.precio_litro),
+        borderColor:'#c9a96d',backgroundColor:'rgba(201,169,109,.1)',
+        borderWidth:2,pointRadius:4,pointBackgroundColor:'#c9a96d',tension:.3,fill:true,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{color:'#6b6560',font:{family:'DM Mono',size:9}}},
+        tooltip:{backgroundColor:'#161513',borderColor:'#2a2826',borderWidth:1,
+          titleColor:'#e5dfd7',bodyColor:'#c9a96d',
+          callbacks:{label:ctx=>` $${ctx.parsed.y.toLocaleString('es-CL',{minimumFractionDigits:2})}/L`}}
+      },
+      scales:{
+        x:{ticks:{color:'#6b6560',font:{family:'DM Mono',size:8}},grid:{color:'#1f1d1b'}},
+        y:{ticks:{color:'#6b6560',font:{family:'DM Mono',size:8},
+            callback:v=>'$'+v.toLocaleString('es-CL')},grid:{color:'#1f1d1b'}}
+      }
+    }
+  });
+
+  // Table
+  const wrap=document.getElementById('sp-evo-tbl-wrap');
+  const rows=data.map(d=>`
+    <tr>
+      <td style="color:var(--muted)">${d.periodo}</td>
+      <td style="color:var(--warn);font-weight:500">$${fD(d.precio_litro)}</td>
+      <td style="color:var(--muted)">${fN(d.cantidad_litros)} L</td>
+    </tr>`).join('');
+  wrap.innerHTML=`<table class="comp-tbl" style="max-width:360px">
+    <thead><tr><th style="text-align:left">Período</th><th>$/L</th><th>Cantidad</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+
+
+
+// ── SIDEBAR TABS ──────────────────────────────────────────────────────
+document.querySelectorAll('.stab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.stab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.sidebar-pane').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('sp-'+tab.dataset.pane).classList.add('active');
+    if(tab.dataset.pane==='stock') loadStock();
+    if(tab.dataset.pane==='wines' && allWines.length===0) loadWineList();
+  });
+});
+
+// ── TEMPORADA CHANGE ──────────────────────────────────────────────────
+document.getElementById('sel-temporada').addEventListener('change', () => {
+  currentCodigo=null; currentWine=null; pendingChanges={};
+  document.getElementById('wine-editor').classList.remove('open');
+  document.getElementById('empty-msg').style.display='';
+  document.getElementById('btn-guardar').style.display='none';
+  document.getElementById('btn-reset').style.display='none';
+  document.getElementById('sum-pill').style.display='none';
+  loadWineList(); loadStock();
+});
+document.getElementById('sel-ref').addEventListener('change', () => {
+  if(currentCodigo) selectWine(currentCodigo);
+});
+
+// ── EXPORT CSV ────────────────────────────────────────────────────────
+document.getElementById('btn-export').addEventListener('click', () => {
+  const t=getTemporada();
+  if(!t){toast('Selecciona una temporada primero','var(--warn)');return;}
+  window.location=`/api/exportar/?temporada=${t}`;
+});
+
+// ── MODAL CARGAR EXCEL ────────────────────────────────────────────────
+const modoDescs = {
+  'auto': 'Detecta automáticamente si es el Excel original o la plantilla simplificada.',
+  'original': 'Excel original con hojas: BASE, STOCK OCT, PRODUCCION 20XX, TD$Con compra uva.',
+  'plantilla': 'Plantilla simplificada con hojas: BASE, STOCK, NECESIDADES, PRECIOS.',
+};
+let uploadModo = 'auto';
+let uploadSolo = '';
+
+document.getElementById('btn-cargar-excel').addEventListener('click', () => {
+  document.getElementById('upload-result').style.display = 'none';
+  document.getElementById('upload-progress').style.display = 'none';
+  document.getElementById('upload-filename').textContent = 'Sin archivo…';
+  document.getElementById('upload-filename').style.color = 'var(--muted)';
+  document.getElementById('upload-file').value = '';
+  document.getElementById('btn-upload-go').disabled = true;
+  document.getElementById('upload-mes').value = new Date().getMonth() + 1;
+  document.getElementById('modal-upload').classList.add('open');
+});
+document.getElementById('modal-upload-close').addEventListener('click', () =>
+  document.getElementById('modal-upload').classList.remove('open'));
+document.getElementById('modal-upload-cancel').addEventListener('click', () =>
+  document.getElementById('modal-upload').classList.remove('open'));
+
+document.querySelectorAll('[data-modo]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-modo]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    uploadModo = btn.dataset.modo;
+    document.getElementById('modo-desc').textContent = modoDescs[uploadModo];
+  });
+});
+
+document.querySelectorAll('[data-solo]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-solo]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    uploadSolo = btn.dataset.solo;
+  });
+});
+
+document.getElementById('upload-file').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (f) {
+    document.getElementById('upload-filename').textContent = f.name;
+    document.getElementById('upload-filename').style.color = 'var(--text)';
+    document.getElementById('btn-upload-go').disabled = false;
+    const match = f.name.match(/20(\d\d)/);
+    if (match) document.getElementById('upload-anio').value = '20' + match[1];
+  }
+});
+
+document.getElementById('btn-upload-go').addEventListener('click', async () => {
+  const file = document.getElementById('upload-file').files[0];
+  const anio = document.getElementById('upload-anio').value;
+  const mes = document.getElementById('upload-mes').value;
+  if (!file || !anio) return;
+
+  const btn = document.getElementById('btn-upload-go');
+  btn.disabled = true; btn.textContent = 'Cargando…';
+  document.getElementById('upload-result').style.display = 'none';
+  document.getElementById('upload-progress').style.display = 'block';
+
+  let pct = 0;
+  const bar = document.getElementById('upload-bar');
+  const msgEl = document.getElementById('upload-msg');
+  const interval = setInterval(() => {
+    pct = Math.min(pct + 4, 85);
+    bar.style.width = pct + '%';
+    if (pct < 25) msgEl.textContent = 'Leyendo archivo…';
+    else if (pct < 55) msgEl.textContent = 'Procesando vinos y componentes…';
+    else msgEl.textContent = 'Guardando en base de datos…';
+  }, 180);
+
+  try {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('anio', anio);
+    fd.append('mes', mes);
+    fd.append('modo', uploadModo);
+    fd.append('solo', uploadSolo);
+    fd.append('csrfmiddlewaretoken', getCsrf());
+
+    const r = await fetch('/api/upload-excel/', {method: 'POST', body: fd});
+    const data = await r.json();
+
+    clearInterval(interval);
+    bar.style.width = '100%';
+    document.getElementById('upload-progress').style.display = 'none';
+
+    const box = document.getElementById('upload-result');
+    box.style.display = 'block';
+
+    if (data.ok) {
+      box.style.background = 'rgba(122,184,122,.1)';
+      box.style.border = '1px solid rgba(122,184,122,.3)';
+      box.style.color = 'var(--accent2)';
+      const parts = [];
+      if (!uploadSolo || uploadSolo === '') {
+        parts.push(`${data.vinos} vinos · ${data.configs} configuraciones`);
+        parts.push(`${data.necesidades} necesidades`);
+      }
+      if (!uploadSolo || uploadSolo === 'stock') {
+        parts.push(`${data.stock} materiales en stock (corte ${data.mes}/${data.anio})`);
+        if (data.corte_vigente) parts.push(`Corte vigente: <strong>${data.corte_vigente}</strong>`);
+      }
+      if (!uploadSolo || uploadSolo === 'precios') {
+        parts.push(`${data.precios} precios del período ${data.mes}/${data.anio}`);
+      }
+      box.innerHTML = `✓ Carga exitosa — Temporada <strong>${data.anio}</strong><br>${parts.join('<br>')}`;
+      setTimeout(() => location.reload(), 2500);
+    } else {
+      box.style.background = 'rgba(212,100,90,.1)';
+      box.style.border = '1px solid rgba(212,100,90,.3)';
+      box.style.color = 'var(--danger)';
+      box.textContent = `Error: ${data.error}`;
+    }
+  } catch(err) {
+    clearInterval(interval);
+    document.getElementById('upload-progress').style.display = 'none';
+    const box = document.getElementById('upload-result');
+    box.style.display = 'block';
+    box.style.background = 'rgba(212,100,90,.1)';
+    box.style.color = 'var(--danger)';
+    box.textContent = `Error: ${err.message}`;
+  }
+
+  btn.disabled = false; btn.textContent = '📤 Cargar archivo';
+});
+
+
+(async ()=>{
+  await loadCortes();
+  await loadWineList();
+  await loadStock();
+  // Set ref selector to one year before active
+  const tempSel=document.getElementById('sel-temporada');
+  const refSel=document.getElementById('sel-ref');
+  if(tempSel.options.length>=2) refSel.value=tempSel.options[1]?.value||'';
+})();
+</script>
+</body>
+</html>
