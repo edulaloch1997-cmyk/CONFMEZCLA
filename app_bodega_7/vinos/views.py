@@ -6,7 +6,10 @@ from datetime import datetime
 
 from django.db import models
 from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import get_user_model
+from django.http import HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 
@@ -139,9 +142,12 @@ def api_todos_cortes(request):
 
 # ── PÁGINAS ───────────────────────────────────────────────────────────
 
+@login_required
 def index(request):
     import json as _json
     temporadas = list(Temporada.objects.all())
+    # Attach bloqueada info for template
+    # (already in model)
 
     # Active temporada
     temp = Temporada.objects.filter(activa=True).first() or (temporadas[0] if temporadas else None)
@@ -267,6 +273,14 @@ def api_vinos(request):
     }
 
     qs = Vino.objects.all()
+    # Superuser sees everything; other users filtered by perfil
+    if request.user.is_authenticated and not request.user.is_superuser:
+        try:
+            perfil = request.user.perfil_enologo
+            if perfil.enologos:
+                qs = qs.filter(enologo__in=perfil.enologos)
+        except Exception:
+            pass  # no profile = see all
     if filtros['estado'] != 'todos':
         qs = qs.filter(estado=filtros['estado'])
     if filtros['revision'] != 'todos':
@@ -319,8 +333,15 @@ def api_vino_detalle(request, codigo):
 
     configs_ref = {}
     if ref_temporada_id:
-        for c in Configuracion.objects.filter(vino=vino, temporada_id=ref_temporada_id):
-            configs_ref[c.material.codigo] = c.participacion
+        for c in Configuracion.objects.filter(
+                vino=vino, temporada_id=ref_temporada_id).select_related('material'):
+            mc = c.material.codigo
+            # Use saved price for ref year if available
+            precio_ref = c.costo_litro_guardado if c.costo_litro_guardado > 0                          else get_precio(mc, p_map, s_map)
+            configs_ref[mc] = {
+                'participacion': c.participacion,
+                'precio': precio_ref,
+            }
 
     componentes = []
     if temporada_id:
@@ -329,7 +350,13 @@ def api_vino_detalle(request, codigo):
                   .select_related('material')):
             mc = c.material.codigo
             st = s_map.get(mc, {})
-            precio = get_precio(mc, p_map, s_map)
+            # Use saved price for bloqueada temporadas, current price otherwise
+            try:
+                t_obj = Temporada.objects.get(pk=temporada_id)
+                use_saved = t_obj.bloqueada and c.costo_litro_guardado > 0
+            except Exception:
+                use_saved = False
+            precio = c.costo_litro_guardado if use_saved else get_precio(mc, p_map, s_map)
             componentes.append({
                 'material_codigo': mc,
                 'descripcion': c.material.descripcion,
@@ -349,6 +376,25 @@ def api_vino_detalle(request, codigo):
     ventas_hist = {v.anio: {'litros': v.litros, 'cajas': v.cajas}
                    for v in vino.ventas.order_by('anio')}
 
+    # Build ref componentes (all components from ref year, even if not in new config)
+    componentes_ref = []
+    if ref_temporada_id:
+        for c in (Configuracion.objects
+                  .filter(vino=vino, temporada_id=ref_temporada_id)
+                  .select_related('material')):
+            mc = c.material.codigo
+            st = s_map.get(mc, {})
+            ref_data = configs_ref.get(mc, {})
+            precio_comp_ref = ref_data.get('precio', get_precio(mc, p_map, s_map))                               if isinstance(ref_data, dict) else get_precio(mc, p_map, s_map)
+            componentes_ref.append({
+                'material_codigo': mc,
+                'descripcion': c.material.descripcion,
+                'variedad': c.material.variedad or '',
+                'participacion': c.participacion,
+                'costo_litro': round(precio_comp_ref, 2),
+                'stock_litros': st.get('litros', 0),
+            })
+
     return JsonResponse({
         'vino': {
             'id': vino.id, 'codigo': vino.codigo, 'descripcion': vino.descripcion,
@@ -360,6 +406,7 @@ def api_vino_detalle(request, codigo):
         },
         'componentes': componentes,
         'ventas_historico': ventas_hist,
+        'componentes_ref': componentes_ref,
         'temporadas': list(Temporada.objects.values('id', 'anio', 'activa')),
     })
 
@@ -463,6 +510,20 @@ def api_stock(request):
             continue
         bods = sorted(a['bodegas'])
         bodega_display = ', '.join(bods) if len(bods) > 1 else (bods[0] if bods else '')
+        # Calculate necesidad acumulada for this material
+        # = sum of (necesidad_vino * participacion) across all configs in temporada
+        nec_acum = 0.0
+        if temporada_id:
+            from django.db.models import F
+            configs_mat = (Configuracion.objects
+                .filter(material__codigo=mc, temporada_id=temporada_id)
+                .select_related('vino'))
+            for cfg in configs_mat:
+                nec_vino = getattr(
+                    Necesidad.objects.filter(vino=cfg.vino, temporada_id=temporada_id).first(),
+                    'litros', 0) or 0
+                nec_acum += abs(nec_vino) * cfg.participacion
+
         data.append({
             'material_codigo':   mc,
             'descripcion':       mat.descripcion,
@@ -470,13 +531,15 @@ def api_stock(request):
             'calidad':           mat.calidad or '',
             'valle':             mat.valle or '',
             'color':             mat.color or '',
-            'stock_litros':      a['litros_total'],        # total todas las bodegas
-            'litros_por_bodega': a['litros_por_bodega'],   # dict bodega->litros
+            'stock_litros':      a['litros_total'],
+            'litros_por_bodega': a['litros_por_bodega'],
             'precio_litro':      a['precio'],
             'bodega':            bodega_display,
             'bodegas':           bods,
             'aptitud_vinos':     a['aptitud'],
             'is_apt':            a['is_apt'],
+            'nec_acumulada':     round(nec_acum),
+            'cobertura_pct':     round(a['litros_total'] / nec_acum * 100) if nec_acum > 0 else None,
         })
 
     data.sort(key=lambda x: (0 if x['is_apt'] else 1, -x['stock_litros']))
@@ -484,43 +547,45 @@ def api_stock(request):
 
 
 def api_stock_detalle(request, material_codigo):
-    """Detalle de líneas individuales (cubas/cosechas) de un material en el corte activo."""
-    corte_id = request.GET.get('corte_id')
+    """Detalle de líneas individuales (cubas/cosechas) de un material — todas las bodegas."""
+    corte_id     = request.GET.get('corte_id')
     temporada_id = request.GET.get('temporada')
 
     if corte_id:
-        sm = StockMaterial.objects.filter(
+        sms = StockMaterial.objects.filter(
             corte_id=corte_id, material__codigo=material_codigo
-        ).first()
+        ).prefetch_related('detalles')
     else:
         corte = get_vigente_stock(temporada_id) if temporada_id else None
         if not corte:
             corte = CorteStock.objects.order_by('-anio', '-mes').first()
-        sm = StockMaterial.objects.filter(
+        sms = StockMaterial.objects.filter(
             corte=corte, material__codigo=material_codigo
-        ).first() if corte else None
+        ).prefetch_related('detalles') if corte else StockMaterial.objects.none()
 
-    if not sm:
-        return JsonResponse({'total': 0, 'precio': 0, 'detalles': []})
+    if not sms.exists():
+        return JsonResponse({'total_litros': 0, 'precio_litro': 0, 'detalles': []})
 
-    # Group by cosecha + bodega
     from django.db.models import Sum
+    # Aggregate detalles across ALL bodega rows of this material
+    det_qs = StockDetalle.objects.filter(stock__in=sms)
     detalles = list(
-        sm.detalles
-        .values('cosecha', 'bodega')
-        .annotate(litros_total=Sum('litros'))
-        .order_by('-cosecha', 'bodega')
+        det_qs.values('cosecha', 'bodega')
+               .annotate(litros=Sum('litros'))
+               .order_by('-cosecha', 'bodega')
     )
-    # Rename for API consistency
-    detalles = [{'cosecha': d['cosecha'], 'bodega': d['bodega'],
-                 'litros': d['litros_total']} for d in detalles]
+
+    first = sms.first()
+    total = sum(s.litros_totales for s in sms)
+    precio = next((s.precio_litro for s in sms if s.precio_litro), 0)
+    bodegas = sorted({s.bodega for s in sms if s.bodega})
 
     return JsonResponse({
         'material_codigo': material_codigo,
-        'descripcion': sm.material.descripcion,
-        'total_litros': sm.litros_totales,
-        'precio_litro': sm.precio_litro,
-        'bodega_principal': sm.bodega,
+        'descripcion': first.material.descripcion,
+        'total_litros': total,
+        'precio_litro': precio,
+        'bodegas': bodegas,
         'n_lineas': len(detalles),
         'detalles': detalles,
     })
@@ -957,3 +1022,160 @@ def api_exportar(request):
             round(cob_ind, 1), round(cob_glob, 1),
         ])
     return response
+
+def api_bloquear_temporada(request):
+    """Bloquea/desbloquea una temporada para proteger el estándar de cambios de precio."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'No autenticado'}, status=403)
+    import json
+    data = json.loads(request.body)
+    temporada_id = data.get('temporada_id')
+    bloqueada = data.get('bloqueada', True)
+    try:
+        t = Temporada.objects.get(pk=temporada_id)
+        t.bloqueada = bloqueada
+        t.save()
+        return JsonResponse({'ok': True, 'bloqueada': t.bloqueada, 'anio': t.anio})
+    except Temporada.DoesNotExist:
+        return JsonResponse({'error': 'Temporada no encontrada'}, status=404)
+
+# ── USER MANAGEMENT ───────────────────────────────────────────────────
+
+@login_required
+def vista_usuarios(request):
+    """Página de gestión de usuarios (solo superusuarios)."""
+    if not request.user.is_superuser:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden("Solo superusuarios pueden gestionar usuarios.")
+    from django.contrib.auth.models import User
+    from .models import PerfilUsuario
+    from django.contrib import messages as dj_messages
+
+    # Build user list with perfil
+    usuarios = []
+    for u in User.objects.all().order_by('username'):
+        try:
+            perfil = u.perfil_enologo
+        except Exception:
+            perfil = PerfilUsuario.objects.create(usuario=u)
+        u.perfil = perfil
+        usuarios.append(u)
+
+    return render(request, 'vinos/usuarios.html', {'usuarios': usuarios})
+
+
+@login_required
+def crear_usuario(request):
+    if not request.user.is_superuser:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+    if request.method != 'POST':
+        from django.shortcuts import redirect
+        return redirect('usuarios')
+    from django.contrib.auth.models import User
+    from django.contrib import messages as dj_messages
+    from .models import PerfilUsuario
+
+    username  = request.POST.get('username', '').strip()
+    password  = request.POST.get('password', '')
+    nombre    = request.POST.get('nombre', '')
+    enologos_str = request.POST.get('enologos', '').strip()
+    bodegas_str  = request.POST.get('bodegas', '').strip()
+    solo_lect    = request.POST.get('solo_lectura', '0') == '1'
+
+    if User.objects.filter(username=username).exists():
+        dj_messages.error(request, f'El usuario "{username}" ya existe.')
+        from django.shortcuts import redirect
+        return redirect('usuarios')
+
+    enologos = [e.strip() for e in enologos_str.split(',') if e.strip()]
+    bodegas  = [b.strip() for b in bodegas_str.split(',')  if b.strip()]
+
+    u = User.objects.create_user(username=username, password=password)
+    if nombre:
+        parts = nombre.split(' ', 1)
+        u.first_name = parts[0]
+        u.last_name  = parts[1] if len(parts) > 1 else ''
+        u.save()
+    PerfilUsuario.objects.create(usuario=u, enologos=enologos,
+                                 bodegas=bodegas, solo_lectura=solo_lect)
+    dj_messages.success(request, f'Usuario "{username}" creado correctamente.')
+    from django.shortcuts import redirect
+    return redirect('usuarios')
+
+
+@login_required
+def editar_usuario(request, user_id):
+    if not request.user.is_superuser:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+    from django.contrib.auth.models import User
+    from django.contrib import messages as dj_messages
+    from .models import PerfilUsuario
+    from django.shortcuts import redirect, get_object_or_404
+
+    u = get_object_or_404(User, pk=user_id)
+    if request.method == 'POST':
+        password     = request.POST.get('password', '')
+        enologos_str = request.POST.get('enologos', '').strip()
+        bodegas_str  = request.POST.get('bodegas',  '').strip()
+        solo_lect    = request.POST.get('solo_lectura', '0') == '1'
+
+        if password:
+            u.set_password(password)
+            u.save()
+
+        enologos = [e.strip() for e in enologos_str.split(',') if e.strip()]
+        bodegas  = [b.strip() for b in bodegas_str.split(',')  if b.strip()]
+
+        perfil, _ = PerfilUsuario.objects.get_or_create(usuario=u)
+        perfil.enologos    = enologos
+        perfil.bodegas     = bodegas
+        perfil.solo_lectura = solo_lect
+        perfil.save()
+        dj_messages.success(request, f'Usuario "{u.username}" actualizado.')
+    return redirect('usuarios')
+
+
+@login_required
+def eliminar_usuario(request, user_id):
+    if not request.user.is_superuser:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+    from django.contrib.auth.models import User
+    from django.contrib import messages as dj_messages
+    from django.shortcuts import redirect, get_object_or_404
+
+    u = get_object_or_404(User, pk=user_id)
+    if request.method == 'POST' and not u.is_superuser:
+        username = u.username
+        u.delete()
+        dj_messages.success(request, f'Usuario "{username}" eliminado.')
+    return redirect('usuarios')
+
+def api_temporada_estado(request):
+    """Retorna el estado (bloqueada, anio) de una temporada."""
+    tid = request.GET.get('id')
+    if not tid:
+        return JsonResponse({'error': 'id requerido'}, status=400)
+    try:
+        t = Temporada.objects.get(pk=tid)
+        return JsonResponse({'id': t.id, 'anio': t.anio, 'bloqueada': t.bloqueada, 'activa': t.activa})
+    except Temporada.DoesNotExist:
+        return JsonResponse({'error': 'No encontrada'}, status=404)
+
+def api_precio_vigente(request):
+    """Retorna el período del precio más reciente cargado."""
+    from .models import PrecioMaterial
+    ultimo = PrecioMaterial.objects.order_by('-anio', '-mes').first()
+    if not ultimo:
+        return JsonResponse({'label': None})
+    meses = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
+    mes_str = meses[ultimo.mes] if 1 <= ultimo.mes <= 12 else str(ultimo.mes)
+    return JsonResponse({
+        'anio': ultimo.anio,
+        'mes':  ultimo.mes,
+        'label': f"{mes_str} {ultimo.anio}",
+    })

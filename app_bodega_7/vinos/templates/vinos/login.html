@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Estándar de Mezclas — Login</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=DM+Mono:wght@300;400;500&display=swap');
+  :root{--bg:#f5f3f0;--bg2:#ffffff;--border:#cdc6bc;--text:#1a1714;--muted:#6a6258;
+        --accent:#8b6914;--danger:#a82820;--mono:'DM Mono',monospace;--serif:'Cormorant Garamond',serif;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--mono);
+       min-height:100vh;display:flex;align-items:center;justify-content:center;}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;
+        padding:40px 36px;width:340px;box-shadow:0 2px 12px rgba(0,0,0,.06);}
+  .logo{font-family:var(--serif);font-size:1.6rem;font-weight:300;color:var(--accent);
+        text-align:center;margin-bottom:6px;}
+  .sub{font-size:.62rem;color:var(--muted);text-align:center;margin-bottom:28px;letter-spacing:.04em;}
+  label{display:block;font-size:.6rem;color:var(--muted);margin-bottom:4px;letter-spacing:.05em;text-transform:uppercase;}
+  input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:3px;
+        font-family:var(--mono);font-size:.75rem;background:var(--bg);color:var(--text);
+        outline:none;margin-bottom:16px;}
+  input:focus{border-color:var(--accent);}
+  button{width:100%;padding:10px;background:var(--accent);color:#fff;border:none;
+         border-radius:3px;font-family:var(--mono);font-size:.72rem;cursor:pointer;
+         letter-spacing:.05em;margin-top:4px;}
+  button:hover{opacity:.9;}
+  .error{background:#fdecea;border:1px solid var(--danger);color:var(--danger);
+         font-size:.62rem;padding:8px 10px;border-radius:3px;margin-bottom:14px;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">⬡ Estándar</div>
+  <div class="sub">Sistema de Estándar de Mezclas</div>
+  {% if form.errors %}
+  <div class="error">Usuario o contraseña incorrectos.</div>
+  {% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <label>Usuario</label>
+    <input type="text" name="username" autofocus autocomplete="username">
+    <label>Contraseña</label>
+    <input type="password" name="password" autocomplete="current-password">
+    <button type="submit">Ingresar →</button>
+  </form>
+</div>
+</body>
+</html>

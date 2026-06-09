@@ -29,5 +29,12 @@ urlpatterns = [
     # acciones
     path('api/copiar-temporada/', views.api_copiar_temporada),
     path('api/upload-excel/', views.api_upload_excel),
+    path('api/bloquear-temporada/', views.api_bloquear_temporada),
+    path('api/temporada-estado/', views.api_temporada_estado),
+    path('api/precio-vigente/', views.api_precio_vigente),
+    path('usuarios/', views.vista_usuarios, name='usuarios'),
+    path('usuarios/crear/', views.crear_usuario, name='crear_usuario'),
+    path('usuarios/editar/<int:user_id>/', views.editar_usuario, name='editar_usuario'),
+    path('usuarios/eliminar/<int:user_id>/', views.eliminar_usuario, name='eliminar_usuario'),
     path('api/exportar/', views.api_exportar),
 ]

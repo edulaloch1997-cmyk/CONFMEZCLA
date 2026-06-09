@@ -241,6 +241,31 @@ textarea.notas-ta:focus{border-color:var(--accent);}
 ::-webkit-scrollbar{width:3px;height:3px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* ── RESPONSIVE MOBILE ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  body { grid-template-rows: auto 1fr; }
+  .main { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .sidebar.mobile-open { display: flex; position: fixed; inset: 0; z-index: 200;
+    width: 85vw; max-width: 320px; }
+  .content { overflow-y: auto; }
+  .cfg { grid-template-columns: 1fr; }
+  .editor-hdr { flex-wrap: wrap; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .comp-tbl { font-size: .58rem; }
+  .comp-tbl th:nth-child(n+8) { display: none; }
+  .comp-tbl td:nth-child(n+8) { display: none; }
+  .tb-row1 { flex-wrap: wrap; gap: 4px; }
+  .tb-row2 { flex-wrap: wrap; gap: 4px; }
+  .years-row { grid-template-columns: repeat(2, 1fr); }
+  .temp-wrap select { max-width: 90px; }
+  h1 { font-size: .8rem; }
+  #btn-menu-sidebar { display: flex; }
+}
+@media (min-width: 769px) {
+  #btn-menu-sidebar { display: none; }
+}
 </style>
 </head>
 <body>
@@ -266,6 +291,7 @@ textarea.notas-ta:focus{border-color:var(--accent);}
       <select id="sel-corte" style="color:var(--blue);max-width:160px;">
         <option value="">Cargando…</option>
       </select>
+      <span id="info-badge" style="font-size:.57rem;color:var(--muted);margin-left:4px;"></span>
       <button class="btn btn-ghost" id="btn-recalcular" style="color:var(--blue);border-color:var(--blue);padding:2px 7px;" title="Recalcular con este corte">↻</button>
     </div>
     <div class="sep"></div>
@@ -281,12 +307,24 @@ textarea.notas-ta:focus{border-color:var(--accent);}
     <button class="btn btn-ghost" id="btn-reset" style="display:none">↺ Reset</button>
     <button class="btn btn-ghost" id="btn-export">⬇ CSV</button>
     <button class="btn btn-ghost" id="btn-nuevo-anio">📅 Nuevo año</button>
+    <button class="btn btn-ghost" id="btn-bloquear" title="Bloquear/desbloquear config actual">🔒 Bloquear</button>
     <button class="btn btn-ghost" id="btn-cargar-excel">📂 Cargar Excel</button>
     <div style="margin-left:auto"></div>
-    <a href="/admin/" target="_blank" class="tb-link">⚙ Admin</a>
+    {% if user.is_superuser %}<a href="/usuarios/" class="tb-link">👤 Usuarios</a>{% endif %}
+    <span style="font-size:.58rem;color:var(--muted)">{{ user.username }}</span>
+    <a href="/logout/" class="tb-link">⏻ Salir</a>
+    {% if user.is_superuser %}<a href="/admin/" target="_blank" class="tb-link">⚙ Admin</a>{% endif %}
+  </div>
+  <div class="tb-row3" id="tb-info-row" style="display:flex;align-items:center;gap:8px;padding:2px 12px;background:var(--bg3);border-top:1px solid var(--border);font-family:var(--mono);font-size:.58rem;color:var(--muted);">
+    <span>Trabajando con:</span>
+    <span id="info-stock" style="color:var(--blue);">Stock: —</span>
+    <span>·</span>
+    <span id="info-precios" style="color:var(--warn);">Precios: —</span>
+    <span>·</span>
+    <span id="info-config" style="color:var(--accent);">Config: —</span>
+    <span id="info-lock" style="margin-left:4px;"></span>
   </div>
 </div>
-
 <!-- MAIN -->
 <div class="main">
 <!-- SIDEBAR -->
@@ -538,6 +576,7 @@ textarea.notas-ta:focus{border-color:var(--accent);}
       <button class="modal-x" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body" id="ms-body"></div>
+    <div id="ms-detalles" style="padding:0 16px 8px;"></div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
       <button class="btn btn-primary" id="ms-add-btn">+ Agregar a mezcla</button>
@@ -647,23 +686,21 @@ textarea.notas-ta:focus{border-color:var(--accent);}
 
       <!-- Qué hojas reconoce -->
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:8px 11px;margin-bottom:12px;font-size:.62rem;color:var(--muted);line-height:1.7;">
-        <div style="color:var(--text);font-weight:500;margin-bottom:4px;">Hojas reconocidas automáticamente:</div>
-        <div><span style="color:var(--accent)">BASE</span> — configuraciones (Part2024, Part2026)</div>
-        <div><span style="color:var(--accent2)">STOCK</span> o <span style="color:var(--accent2)">STOCK OCT</span> — crea un nuevo corte mensual y lo marca como vigente</div>
-        <div><span style="color:#5b8dd9">NECESIDADES</span> o <span style="color:#5b8dd9">PRODUCCION 20XX</span> — litros a producir</div>
-        <div><span style="color:var(--warn)">PRECIOS</span> o <span style="color:var(--warn)">TD$CON COMPRA UVA</span> — guarda precios del mes y actualiza el stock vigente</div>
+
+        <div style="font-size:.6rem;color:var(--muted);margin-bottom:4px;font-weight:500">Hojas reconocidas</div>
+        <div><span style="color:var(--accent)">BASE</span> — configuraciones</div>
+        <div><span style="color:var(--accent2)">STOCK</span> — inventario</div>
+        <div><span style="color:var(--warn)">PRECIOS</span> — precio $/litro</div>
       </div>
 
-      <!-- Resultado -->
-      <div id="upload-result" style="display:none;padding:10px 12px;border-radius:3px;font-size:.7rem;line-height:1.7;"></div>
-
-      <!-- Progress -->
-      <div id="upload-progress" style="display:none;padding:8px 0;font-size:.68rem;color:var(--muted);">
-        <div style="height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:6px;">
-          <div id="upload-bar" style="height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width 0.3s;"></div>
+      <div id="upload-progress" style="display:none;margin-bottom:10px;">
+        <div id="upload-msg" style="font-size:.62rem;color:var(--muted);margin-bottom:5px;">Procesando…</div>
+        <div style="background:var(--bg3);border-radius:3px;height:6px;overflow:hidden;">
+          <div id="upload-bar" style="height:100%;width:0%;background:var(--accent2);border-radius:3px;transition:width .3s;"></div>
         </div>
-        <span id="upload-msg">Procesando…</span>
       </div>
+      <div id="upload-result" style="display:none;padding:8px 10px;border-radius:3px;font-size:.65rem;margin-bottom:10px;"></div>
+
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="modal-upload-cancel">Cancelar</button>
@@ -672,10 +709,11 @@ textarea.notas-ta:focus{border-color:var(--accent);}
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+
 <script>
+
 
 
 
@@ -816,19 +854,100 @@ function toggleFilter(set, val, fn) {
   fn();
 }
 
+async function syncBloquearBtn() {
+  const t = getTemporada();
+  if (!t) return;
+  const btn = document.getElementById('btn-bloquear');
+  if (!btn) return;
+  try {
+    const r = await fetch('/api/temporada-estado/?id='+t);
+    const data = await r.json();
+    const bloq = data.bloqueada;
+    btn.classList.toggle('locked', bloq);
+    btn.textContent      = bloq ? '🔒 Bloqueada' : '🔓 Bloquear';
+    btn.style.color      = bloq ? 'var(--danger)' : '';
+    btn.style.borderColor= bloq ? 'var(--danger)' : '';
+    updateInfoBadge(data);
+    await updateInfoRow();
+  } catch(e) {}
+}
+
+async function updateInfoRow() {
+  // Update the "Trabajando con" info row
+  const selCorte = document.getElementById('sel-corte');
+  const corteText = selCorte?.options[selCorte?.selectedIndex]?.text || '—';
+  const el_stock  = document.getElementById('info-stock');
+  const el_precio = document.getElementById('info-precios');
+  const el_config = document.getElementById('info-config');
+  const el_lock   = document.getElementById('info-lock');
+
+  // Read corte text (sel-corte populated by loadCortes)
+  const corteIdx = selCorte?.selectedIndex ?? -1;
+  const corteTextNow = corteIdx >= 0 ? selCorte.options[corteIdx]?.text : '';
+  if (el_stock) el_stock.textContent = (corteTextNow && corteTextNow !== 'Cargando…')
+    ? 'Stock: ' + corteTextNow
+    : 'Stock: sin datos';
+
+  // Get latest price period
+  try {
+    const rp = await fetch('/api/precio-vigente/');
+    const dp = await rp.json();
+    if (el_precio) {
+      if (dp.label) {
+        el_precio.textContent = 'Precios: ' + dp.label;
+      } else {
+        // No PrecioMaterial loaded — prices come from stock corte
+        const ct = selCorte?.options[selCorte?.selectedIndex]?.text || '';
+        el_precio.textContent = ct && ct !== 'Cargando…'
+          ? 'Precios: del corte (' + ct + ')'
+          : 'Precios: del stock';
+      }
+    }
+  } catch(e) {
+    if (el_precio) el_precio.textContent = 'Precios: del stock';
+  }
+
+  // Config year
+  // sel-temporada is populated by Django template, always has value
+  const selTemp = document.getElementById('sel-temporada');
+  const configYear = selTemp?.options[selTemp?.selectedIndex]?.text
+                  || selTemp?.value || '—';
+  if (el_config) el_config.textContent = 'Config: ' + configYear;
+
+  // Lock state
+  const btn = document.getElementById('btn-bloquear');
+  const isLocked = btn?.classList.contains('locked');
+  if (el_lock) {
+    el_lock.textContent   = isLocked ? '🔒 Bloqueada' : '';
+    el_lock.style.color   = isLocked ? 'var(--danger)' : '';
+  }
+}
+
+function updateInfoBadge(data) {
+  const badge = document.getElementById('info-badge');
+  if (!badge || !data) return;
+  const parts = [];
+  if (data.anio)     parts.push('Año: ' + data.anio);
+  if (data.bloqueada) parts.push('🔒 Bloqueada');
+  badge.textContent = parts.join(' · ');
+  badge.style.color = data.bloqueada ? 'var(--danger)' : 'var(--muted)';
+}
+
 async function loadCortes() {
   const r = await fetch('/api/stock/cortes/todos/');
   const cortes = await r.json();
   const sel = document.getElementById('sel-corte');
   sel.innerHTML = '';
-  if (!cortes.length) { sel.innerHTML = '<option value="">Sin cortes</option>'; return; }
+  if (!cortes.length) { sel.innerHTML='<option value="">Sin cortes</option>'; return; }
   cortes.forEach((c, i) => {
     const opt = document.createElement('option');
     opt.value = c.id;
     opt.textContent = c.descripcion + ' (' + c.n_materiales + ' mat.)';
-    if (i === 0) { opt.selected = true; currentCorteId = c.id; }
+    if (i === 0) { opt.selected = true; currentCorteId = String(c.id); }
     sel.appendChild(opt);
   });
+  await syncBloquearBtn();
+  await updateInfoRow();
 }
 document.getElementById('sel-corte')?.addEventListener('change', e => { currentCorteId = e.target.value||null; });
 document.getElementById('btn-recalcular')?.addEventListener('click', async () => {
@@ -1301,7 +1420,12 @@ function renderStockList() {
           <span class="si-precio">$${fD(s.precio_litro)}/L</span>
         </div>
         <div style="font-size:.55rem;color:var(--blue);margin-top:1px;">🏠 ${s.bodegas&&s.bodegas.length>1?s.bodegas.join(', '):(s.bodega||'—')}</div>
-        <div style="font-size:.52rem;color:var(--muted);margin-top:1px;">🔍 clic para ver stock por cosecha</div>`;
+        ${s.nec_acumulada > 0 ? `<div style="font-size:.54rem;margin-top:2px;display:flex;gap:5px;align-items:center;">
+          <span style="color:var(--muted)">Nec: ${fN(s.nec_acumulada)} L</span>
+          ${s.cobertura_pct != null ? `<span class="chip ${s.cobertura_pct>=100?'chip-ok':s.cobertura_pct>=70?'chip-warn':'chip-bad'}"
+            style="font-size:.5rem;padding:0 4px;">${s.cobertura_pct}%</span>` : ''}
+        </div>` : ''}
+        <div style="font-size:.52rem;color:var(--muted);margin-top:1px;">🔍 clic para ver por cosecha</div>`;
       div.addEventListener('click', () => openStockModal(s));
       list.appendChild(div);
     });
@@ -1311,6 +1435,12 @@ document.querySelectorAll('[data-sf]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('[data-sf]').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active'); stockFilter=btn.dataset.sf; renderStockList();
+  });
+});
+document.querySelectorAll('[data-sort-stock]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-sort-stock]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); stockSort=btn.dataset.sortStock; renderStockList();
   });
 });
 document.getElementById('stock-search').addEventListener('input', e => { stockSearch=e.target.value; renderStockList(); });
@@ -1333,8 +1463,55 @@ async function openStockModal(s) {
     ${alreadyIn?'<div style="font-size:.66rem;color:var(--warn);margin-top:6px">⚠ Ya está en la mezcla</div>':''}
     <div style="font-size:.58rem;color:var(--muted);margin-top:8px">Aptitud: ${(s.aptitud_vinos||[]).join(', ')||'—'}</div>
   `;
+  // placeholder for async detalle
+  const detEl = document.getElementById('ms-detalles');
+  if (detEl) detEl.innerHTML = '';
   document.getElementById('ms-add-btn').disabled = !currentCodigo;
   document.getElementById('modal-stock').classList.add('open');
+
+  // Load detalle por cosecha/bodega
+  const det = document.getElementById('ms-detalles');
+  if (det) {
+    det.innerHTML = '<div style="font-size:.6rem;color:var(--muted)">Cargando detalle…</div>';
+    try {
+      const cid = getCorteId();
+      const p = (cid ? '?corte_id='+cid : '?temporada='+getTemporada());
+      const rd = await fetch('/api/stock/'+s.material_codigo+'/detalle/'+p);
+      const data = await rd.json();
+      if (!data.detalles || !data.detalles.length) {
+        det.innerHTML = '<div style="font-size:.6rem;color:var(--muted)">Sin detalle de cosecha disponible</div>';
+        return;
+      }
+      const hasBod = data.detalles.some(d => d.bodega);
+      const bodTh  = hasBod ? '<th style="padding:2px 6px;color:var(--muted)">Bodega</th>' : '';
+      const rows = data.detalles.map(d => {
+        const bodTd = hasBod ? '<td style="padding:2px 6px;color:var(--blue)">'+(d.bodega||'—')+'</td>' : '';
+        const pct = data.total_litros > 0 ? (d.litros/data.total_litros*100).toFixed(1)+'%' : '—';
+        return '<tr><td style="padding:2px 6px;font-weight:500">'+(d.cosecha||'S/C')+'</td>'
+          +bodTd+'<td style="padding:2px 6px;text-align:right;color:var(--accent2)">'
+          +fN(d.litros)+' L</td>'
+          +'<td style="padding:2px 6px;text-align:right;color:var(--muted)">'+pct+'</td></tr>';
+      }).join('');
+      const colspan = hasBod ? 2 : 1;
+      det.innerHTML =
+        '<div style="font-size:.57rem;font-weight:500;color:var(--muted);margin-bottom:4px">POR COSECHA'+(hasBod?' Y BODEGA':'')+'</div>'
+        +'<div style="border:1px solid var(--border);border-radius:3px;overflow:hidden">'
+        +'<table style="width:100%;border-collapse:collapse;font-size:.62rem">'
+        +'<thead><tr style="background:var(--bg3)">'
+        +'<th style="padding:2px 6px;text-align:left;color:var(--muted)">Cosecha</th>'
+        +bodTh
+        +'<th style="padding:2px 6px;text-align:right;color:var(--muted)">Litros</th>'
+        +'<th style="padding:2px 6px;text-align:right;color:var(--muted)">%</th>'
+        +'</tr></thead><tbody>'+rows+'</tbody>'
+        +'<tfoot><tr style="background:var(--bg3);border-top:1px solid var(--border)">'
+        +'<td colspan="'+colspan+'" style="padding:2px 6px;font-weight:500">Total</td>'
+        +'<td style="padding:2px 6px;text-align:right;font-weight:500;color:var(--accent2)">'+fN(data.total_litros)+' L</td>'
+        +'<td style="padding:2px 6px;text-align:right;color:var(--warn)">$'+fD(data.precio_litro)+'/L</td>'
+        +'</tr></tfoot></table></div>';
+    } catch(e) {
+      det.innerHTML = '<div style="font-size:.6rem;color:var(--muted)">Sin detalle disponible</div>';
+    }
+  }
 }
 
 function closeModal() { document.getElementById('modal-stock').classList.remove('open'); }
@@ -1367,17 +1544,43 @@ document.getElementById('ms-add-btn').addEventListener('click', () => {
 function renderResumen() {
   if (!currentWine) return;
   const vino = currentWine.vino;
-  const comps = currentWine.componentes;
+  const newComps = currentWine.componentes;
+  const refComps = currentWine.componentes_ref || [];
+
+  // Build union: all materials from new OR ref config
+  const allMats = new Map();
+  // First add ref components
+  refComps.forEach(c => allMats.set(c.material_codigo, {
+    ...c,
+    participacion_nueva: 0,
+    participacion_ref: c.participacion,
+  }));
+  // Then overlay new components
+  newComps.forEach(c => {
+    const existing = allMats.get(c.material_codigo);
+    if (existing) {
+      existing.participacion_nueva = pendingChanges[c.material_codigo] ?? c.participacion;
+      existing.costo_litro = c.costo_litro;
+      existing.stock_litros = c.stock_litros;
+    } else {
+      allMats.set(c.material_codigo, {
+        ...c,
+        participacion_nueva: pendingChanges[c.material_codigo] ?? c.participacion,
+        participacion_ref: c.participacion_ref || 0,
+      });
+    }
+  });
+  const comps = [...allMats.values()];
   const wrap = document.getElementById('resumen-wrap');
   wrap.innerHTML = '';
 
-  const cNueva = comps.reduce((s,c)=>s+(pendingChanges[c.material_codigo]??c.participacion)*c.costo_litro, 0);
-  const cRef = comps.reduce((s,c)=>s+(c.participacion)*c.costo_litro, 0);
-  const cAnt = comps.reduce((s,c)=>s+(c.participacion_ref||0)*c.costo_litro, 0);
+  const cNueva = comps.reduce((s,c)=>s+(c.participacion_nueva||0)*c.costo_litro, 0);
+  const cRef   = comps.reduce((s,c)=>s+(c.participacion_ref||0)*c.costo_litro, 0);
+  const cAnt   = cRef; // ref = vigente año anterior
   const delta = cNueva-cRef;
   let nOk=0,nW=0,nB=0;
   comps.forEach(c=>{
-    const pct=pendingChanges[c.material_codigo]??c.participacion;
+    const pct=c.participacion_nueva||0;
     if(!pct) return;
     const {cob}=stockChip(c.stock_litros, vino.necesidad*pct);
     if(cob>=1)nOk++; else if(cob>=.7)nW++; else nB++;
@@ -1411,16 +1614,19 @@ function renderResumen() {
   </tr></thead>`;
   const tb=document.createElement('tbody');
   comps.forEach(c=>{
-    const pct=pendingChanges[c.material_codigo]??c.participacion;
+    const pct=c.participacion_nueva||0;
+    const pctRef=c.participacion_ref||0;
     const nec=vino.necesidad*pct;
     const {cls,lbl}=stockChip(c.stock_litros,nec);
     const tr=document.createElement('tr');
+    const isNew=pct>0&&pctRef===0;
+    const isDel=pct===0&&pctRef>0;
     tr.innerHTML=`
-      <td style="max-width:160px;line-height:1.2;font-size:.63rem">${c.descripcion}${c.aptitud?' <span class="chip chip-apt" style="font-size:.5rem">⭐</span>':''}</td>
+      <td style="max-width:160px;line-height:1.2;font-size:.63rem;${isDel?'color:var(--muted);text-decoration:line-through':isNew?'color:var(--accent2)':''}">${c.descripcion}</td>
       <td style="color:var(--muted);font-size:.62rem">${c.variedad||'—'}</td>
-      <td style="color:var(--muted)">${fP(c.participacion_ref||0)}</td>
-      <td style="color:var(--muted2)">${fP(c.participacion)}</td>
-      <td style="color:var(--accent);font-weight:500">${fP(pct)}</td>
+      <td style="color:var(--muted)">${fP(pctRef)}</td>
+      <td style="color:var(--muted2)">${fP(pctRef)}</td>
+      <td style="color:${isDel?'var(--danger)':isNew?'var(--accent2)':'var(--accent)'};font-weight:500">${isDel?'eliminado':fP(pct)}</td>
       <td>$${fD(c.costo_litro)}</td>
       <td style="color:var(--accent)">$${fD(pct*c.costo_litro)}</td>
       <td>${fN(Math.round(nec))}</td>
@@ -1436,13 +1642,46 @@ function renderResumen() {
   const canvas=document.createElement('canvas'); canvas.id='res-canvas';
   cb.appendChild(canvas); wrap.appendChild(cb);
 
+  // Bar chart: variedad comparison ref vs nueva
+  const sl3=document.createElement('div'); sl3.className='sec-lbl';
+  sl3.textContent='% por variedad — Ref vs Nueva'; wrap.appendChild(sl3);
+  const varNueva={}, varRef={};
+  comps.forEach(c=>{
+    const v=c.variedad||'Sin variedad';
+    varNueva[v]=(varNueva[v]||0)+(c.participacion_nueva||0);
+    varRef[v]=(varRef[v]||0)+(c.participacion_ref||0);
+  });
+  const allVarsRes=[...new Set([...Object.keys(varNueva),...Object.keys(varRef)])].sort();
+  const barWrap=document.createElement('div');
+  barWrap.style.cssText='display:grid;gap:3px;padding:6px 0;';
+  allVarsRes.forEach(v=>{
+    const pN=varNueva[v]||0, pR=varRef[v]||0;
+    const maxP=Math.max(pN,pR,0.001);
+    const delta=pN-pR;
+    const dCls=delta>0.001?'dp':delta<-0.001?'dn':'';
+    const row=document.createElement('div');
+    row.style.cssText='display:grid;grid-template-columns:90px 1fr 50px 50px;align-items:center;gap:6px;font-size:.6rem;';
+    row.innerHTML=`
+      <div style="color:var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${v}">${v}</div>
+      <div style="position:relative;height:10px;background:var(--bg3);border-radius:2px;overflow:hidden;">
+        <div style="position:absolute;left:0;top:0;height:100%;width:${(pR*100).toFixed(1)}%;background:var(--muted);opacity:.5;border-radius:2px;"></div>
+        <div style="position:absolute;left:0;top:0;height:100%;width:${(pN*100).toFixed(1)}%;background:var(--accent);border-radius:2px;"></div>
+      </div>
+      <div style="text-align:right;color:var(--accent)">${(pN*100).toFixed(1)}%</div>
+      <div style="text-align:right;" class="${dCls}">${delta>0.001?'▲':delta<-0.001?'▼':'='} ${(pR*100).toFixed(1)}%</div>`;
+    barWrap.appendChild(row);
+  });
+  wrap.appendChild(barWrap);
+
+  // Doughnut chart (nueva config)
   if(chartInst){chartInst.destroy();chartInst=null;}
   const varData={};
   comps.forEach(c=>{
     const v=c.variedad||'Sin variedad';
-    varData[v]=(varData[v]||0)+(pendingChanges[c.material_codigo]??c.participacion);
+    varData[v]=(varData[v]||0)+(c.participacion_nueva||0);
   });
-  const labels=Object.keys(varData), vals=Object.values(varData).map(v=>+(v*100).toFixed(2));
+  const labels=Object.keys(varData).filter(k=>varData[k]>0);
+  const vals=labels.map(k=>+(varData[k]*100).toFixed(2));
   chartInst=new Chart(canvas.getContext('2d'),{
     type:'doughnut',
     data:{labels, datasets:[{data:vals, backgroundColor:COLORS.slice(0,labels.length), borderWidth:1, borderColor:'#1f1d1b'}]},
@@ -1911,6 +2150,45 @@ document.getElementById('btn-upload-go').addEventListener('click', async () => {
 });
 
 
+// ── BLOQUEAR TEMPORADA ───────────────────────────────────────────────
+document.getElementById('btn-bloquear')?.addEventListener('click', async () => {
+  const t = getTemporada();
+  if (!t) { toast('Selecciona una temporada primero','var(--warn)'); return; }
+  const btn = document.getElementById('btn-bloquear');
+  const isBloqueada = btn.classList.contains('locked');
+  const r = await fetch('/api/bloquear-temporada/', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','X-CSRFToken':getCsrf()},
+    body: JSON.stringify({temporada_id: parseInt(t), bloqueada: !isBloqueada})
+  });
+  const data = await r.json();
+  if (data.ok) {
+    btn.classList.toggle('locked', data.bloqueada);
+    btn.textContent      = data.bloqueada ? '🔒 Bloqueada' : '🔓 Bloquear';
+    btn.style.color      = data.bloqueada ? 'var(--danger)' : '';
+    btn.style.borderColor= data.bloqueada ? 'var(--danger)' : '';
+    updateInfoBadge(data);
+    if (data.bloqueada) {
+      toast('🔒 Config '+data.anio+' BLOQUEADA — al cargar precios nuevos este estándar NO cambiará','var(--danger)');
+    } else {
+      toast('🔓 Config '+data.anio+' desbloqueada — los precios se actualizarán al cargar Excel','var(--accent2)');
+    }
+  } else {
+    toast('Error al bloquear: '+(data.error||''),'var(--danger)');
+  }
+});
+
+document.getElementById('btn-menu-sidebar')?.addEventListener('click', () => {
+  document.querySelector('.sidebar').classList.toggle('mobile-open');
+});
+document.querySelector('.main')?.addEventListener('click', e => {
+  const sb = document.querySelector('.sidebar');
+  if (sb?.classList.contains('mobile-open') && !sb.contains(e.target)
+      && e.target.id !== 'btn-menu-sidebar') {
+    sb.classList.remove('mobile-open');
+  }
+});
+
 (async ()=>{
   await loadCortes();
   await loadWineList();
@@ -1919,7 +2197,9 @@ document.getElementById('btn-upload-go').addEventListener('click', async () => {
   const tempSel=document.getElementById('sel-temporada');
   const refSel=document.getElementById('sel-ref');
   if(tempSel.options.length>=2) refSel.value=tempSel.options[1]?.value||'';
+  await updateInfoRow();
 })();
+
 </script>
 </body>
 </html>

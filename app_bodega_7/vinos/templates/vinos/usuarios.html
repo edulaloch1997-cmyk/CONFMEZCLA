@@ -1,0 +1,169 @@
+{% extends "vinos/base_admin.html" %}
+{% block title %}Gestión de Usuarios{% endblock %}
+{% block content %}
+<div style="max-width:900px;margin:0 auto;padding:24px 16px;">
+
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+  <a href="/" style="font-size:.65rem;color:var(--muted);text-decoration:none;">← Volver al simulador</a>
+  <h1 style="font-family:var(--serif);font-size:1.4rem;font-weight:300;color:var(--accent);">Gestión de Usuarios</h1>
+</div>
+
+{% if messages %}
+  {% for msg in messages %}
+  <div style="background:{% if msg.tags == 'error' %}#fdecea{% else %}#e6f4e8{% endif %};
+              border:1px solid {% if msg.tags == 'error' %}var(--danger){% else %}var(--accent2){% endif %};
+              color:{% if msg.tags == 'error' %}var(--danger){% else %}var(--accent2){% endif %};
+              padding:8px 12px;border-radius:3px;font-size:.65rem;margin-bottom:12px;">
+    {{ msg }}
+  </div>
+  {% endfor %}
+{% endif %}
+
+<!-- CREATE USER -->
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-title">➕ Crear usuario</div>
+  <form method="post" action="{% url 'crear_usuario' %}">
+    {% csrf_token %}
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end;">
+      <div>
+        <label class="lbl">Username</label>
+        <input class="inp" type="text" name="username" required>
+      </div>
+      <div>
+        <label class="lbl">Contraseña</label>
+        <input class="inp" type="password" name="password" required>
+      </div>
+      <div>
+        <label class="lbl">Nombre completo</label>
+        <input class="inp" type="text" name="nombre">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 80px;gap:10px;align-items:end;margin-top:10px;">
+      <div>
+        <label class="lbl">Enólogos (separados por coma, vacío = todos)</label>
+        <input class="inp" type="text" name="enologos" placeholder="JSOLARI, MWEINLAUB">
+      </div>
+      <div>
+        <label class="lbl">Bodegas (separadas por coma, vacío = todas)</label>
+        <input class="inp" type="text" name="bodegas" placeholder="Bodega Norte, Crianza A">
+      </div>
+      <div>
+        <label class="lbl">Solo lectura</label>
+        <select class="inp" name="solo_lectura">
+          <option value="0">No</option>
+          <option value="1">Sí</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-primary" type="submit" style="margin-top:12px;">Crear usuario</button>
+  </form>
+</div>
+
+<!-- USER LIST -->
+<div class="card">
+  <div class="card-title">👤 Usuarios existentes</div>
+  <table style="width:100%;border-collapse:collapse;font-size:.65rem;">
+    <thead>
+      <tr style="background:var(--bg3);">
+        <th style="padding:6px 10px;text-align:left;color:var(--muted);">Usuario</th>
+        <th style="padding:6px 10px;text-align:left;color:var(--muted);">Nombre</th>
+        <th style="padding:6px 10px;text-align:left;color:var(--muted);">Enólogos</th>
+        <th style="padding:6px 10px;text-align:left;color:var(--muted);">Bodegas</th>
+        <th style="padding:6px 10px;text-align:center;color:var(--muted);">Solo lect.</th>
+        <th style="padding:6px 10px;text-align:center;color:var(--muted);">Superuser</th>
+        <th style="padding:6px 10px;text-align:center;color:var(--muted);">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for u in usuarios %}
+    <tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:6px 10px;font-weight:500;color:var(--accent);">{{ u.username }}</td>
+      <td style="padding:6px 10px;">{{ u.get_full_name|default:"—" }}</td>
+      <td style="padding:6px 10px;color:var(--muted2);">
+        {% if u.perfil.enologos %}{{ u.perfil.enologos|join:", " }}{% else %}<span style="color:var(--muted)">Todos</span>{% endif %}
+      </td>
+      <td style="padding:6px 10px;color:var(--muted2);">
+        {% if u.perfil.bodegas %}{{ u.perfil.bodegas|join:", " }}{% else %}<span style="color:var(--muted)">Todas</span>{% endif %}
+      </td>
+      <td style="padding:6px 10px;text-align:center;">
+        {% if u.perfil.solo_lectura %}<span style="color:var(--warn)">Sí</span>{% else %}—{% endif %}
+      </td>
+      <td style="padding:6px 10px;text-align:center;">
+        {% if u.is_superuser %}<span style="color:var(--accent2)">✓</span>{% else %}—{% endif %}
+      </td>
+      <td style="padding:6px 10px;text-align:center;">
+        <button onclick="editUser('{{ u.id }}','{{ u.perfil.enologos|join:',' }}','{{ u.perfil.bodegas|join:',' }}','{{ u.perfil.solo_lectura }}')"
+                style="font-size:.58rem;padding:2px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:2px;cursor:pointer;">Editar</button>
+        {% if not u.is_superuser %}
+        <form method="post" action="{% url 'eliminar_usuario' u.id %}" style="display:inline"
+              onsubmit="return confirm('¿Eliminar usuario {{ u.username }}?')">
+          {% csrf_token %}
+          <button type="submit" style="font-size:.58rem;padding:2px 8px;background:#fdecea;border:1px solid var(--danger);border-radius:2px;cursor:pointer;color:var(--danger);">Eliminar</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    <!-- Edit form (hidden) -->
+    <tr id="edit-{{ u.id }}" style="display:none;background:var(--bg3);">
+      <td colspan="7" style="padding:10px 14px;">
+        <form method="post" action="{% url 'editar_usuario' u.id %}">
+          {% csrf_token %}
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:8px;align-items:end;">
+            <div>
+              <label class="lbl">Nueva contraseña (vacío = no cambiar)</label>
+              <input class="inp" type="password" name="password" placeholder="dejar vacío para no cambiar">
+            </div>
+            <div>
+              <label class="lbl">Enólogos</label>
+              <input class="inp" type="text" name="enologos" id="enologos-{{ u.id }}">
+            </div>
+            <div>
+              <label class="lbl">Bodegas</label>
+              <input class="inp" type="text" name="bodegas" id="bodegas-{{ u.id }}">
+            </div>
+            <div>
+              <label class="lbl">Solo lectura</label>
+              <select class="inp" name="solo_lectura" id="sl-{{ u.id }}">
+                <option value="0">No</option>
+                <option value="1">Sí</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn-primary" type="submit">Guardar</button>
+              <button type="button" onclick="document.getElementById('edit-{{ u.id }}').style.display='none'"
+                      style="padding:5px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:3px;cursor:pointer;font-size:.63rem;">✕</button>
+            </div>
+          </div>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+</div>
+
+<style>
+  :root{--bg:#f5f3f0;--bg2:#ffffff;--bg3:#eeeae4;--border:#cdc6bc;--text:#1a1714;
+        --muted:#6a6258;--muted2:#48423a;--accent:#8b6914;--accent2:#1e6b28;
+        --danger:#a82820;--warn:#7a5208;--mono:'DM Mono',monospace;--serif:'Cormorant Garamond',serif;}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:16px 18px;}
+  .card-title{font-size:.7rem;font-weight:500;color:var(--muted2);margin-bottom:12px;letter-spacing:.05em;text-transform:uppercase;}
+  .lbl{display:block;font-size:.58rem;color:var(--muted);margin-bottom:3px;letter-spacing:.04em;text-transform:uppercase;}
+  .inp{width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:3px;
+       font-family:var(--mono);font-size:.65rem;background:var(--bg);color:var(--text);outline:none;}
+  .inp:focus{border-color:var(--accent);}
+  .btn-primary{padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:3px;
+               font-family:var(--mono);font-size:.63rem;cursor:pointer;}
+  .btn-primary:hover{opacity:.9;}
+</style>
+<script>
+function editUser(id, enologos, bodegas, soloLectura) {
+  document.getElementById('edit-'+id).style.display = 'table-row';
+  document.getElementById('enologos-'+id).value = enologos;
+  document.getElementById('bodegas-'+id).value  = bodegas;
+  document.getElementById('sl-'+id).value = soloLectura === 'True' ? '1' : '0';
+}
+</script>
+{% endblock %}

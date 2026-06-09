@@ -5,6 +5,7 @@ class Temporada(models.Model):
     anio = models.IntegerField(unique=True)
     descripcion = models.CharField(max_length=100, blank=True)
     activa = models.BooleanField(default=False)
+    bloqueada = models.BooleanField(default=False, help_text='Configuración bloqueada: precios no se actualizan al cargar Excel')
     fecha_carga = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -139,6 +140,8 @@ class Configuracion(models.Model):
     temporada = models.ForeignKey(Temporada, on_delete=models.CASCADE, related_name='configuraciones')
     material = models.ForeignKey(Material, on_delete=models.CASCADE, related_name='configuraciones')
     participacion = models.FloatField(default=0)
+    costo_litro_guardado = models.FloatField(default=0,
+        help_text='Precio $/L al momento de guardar esta configuración')
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -156,3 +159,30 @@ class VentasVino(models.Model):
     class Meta:
         ordering = ['vino__codigo', 'anio']
         unique_together = ('vino', 'anio')
+
+class PerfilUsuario(models.Model):
+    """Asocia un usuario Django con enólogos y bodegas que puede ver."""
+    usuario = models.OneToOneField('auth.User', on_delete=models.CASCADE,
+                                   related_name='perfil_enologo')
+    enologos = models.JSONField(default=list,
+        help_text='Lista de enólogos que puede ver. Vacío = todos.')
+    bodegas = models.JSONField(default=list,
+        help_text='Lista de bodegas que puede ver. Vacío = todas.')
+    solo_lectura = models.BooleanField(default=False,
+        help_text='Solo puede ver, no puede guardar configuraciones')
+
+    def puede_ver_enologo(self, enologo):
+        if not self.enologos: return True
+        return enologo in self.enologos
+
+    def puede_ver_bodega(self, bodega):
+        if not self.bodegas: return True
+        return bodega in self.bodegas
+
+    def __str__(self):
+        return f"Perfil {self.usuario.username}"
+
+    def puede_ver_enologo(self, enologo):
+        if not self.enologos:
+            return True
+        return enologo in self.enologos

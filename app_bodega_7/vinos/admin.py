@@ -5,7 +5,8 @@ from .models import (Temporada, Vino, Material, CorteStock, StockMaterial,
 
 @admin.register(Temporada)
 class TemporadaAdmin(admin.ModelAdmin):
-    list_display = ('anio', 'descripcion', 'activa', 'fecha_carga')
+    list_display = ('anio', 'descripcion', 'activa', 'bloqueada', 'fecha_carga')
+    list_editable = ('activa', 'bloqueada')
     list_editable = ('activa',)
     ordering = ('-anio',)
 
@@ -85,3 +86,13 @@ class VentasVinoAdmin(admin.ModelAdmin):
     list_filter = ('anio', 'vino__calidad')
     search_fields = ('vino__codigo', 'vino__descripcion')
     ordering = ('vino__codigo', 'anio')
+
+
+from .models import PerfilUsuario
+
+@admin.register(PerfilUsuario)
+class PerfilUsuarioAdmin(admin.ModelAdmin):
+    list_display  = ('usuario', 'enologos', 'solo_lectura')
+    list_editable = ('solo_lectura',)
+    search_fields = ('usuario__username',)
+    help_text = "En 'enologos' pon una lista JSON: ['JSOLARI', 'MWEINLAUB']. Vacío = ve todos." 

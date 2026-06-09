@@ -82,11 +82,26 @@ class Command(BaseCommand):
             (160960,  543367, 458.07, [1130],       'Bodega Norte'),
             (140910,  478432, 243.74, [1130],       'Bodega Central'),
         ]
+        # Demo cubas/cosechas por material+bodega
+        det_demo = {
+            (160910,'Bodega Norte'): [('V-N01',2024,2800000,'13.5'),('V-N02',2023,2400000,'13.2')],
+            (160910,'Bodega Sur'):   [('V-S01',2024,2034241,'13.4'),('V-S02',2023,1800000,'13.1')],
+            (101850,'Crianza A'):    [('V-A01',2024,800000, '13.1'),('V-A02',2023,400000, '13.0')],
+            (101850,'Crianza B'):    [('V-B01',2024,550000, '13.3'),('V-B02',2023,350000, '13.2')],
+            (266300,'Bodega Sur'):   [('V-C01',2024,1800000,'12.8'),('V-C02',2023,1339622,'12.6')],
+            (101750,'Crianza B'):    [('V-D01',2024,1100000,'13.3'),('V-D02',2023,700000, '13.1')],
+            (200100,'Guarda 1'):     [('V-E01',2024,600000, '13.8'),('V-E02',2023,350000, '13.7')],
+        }
+        from vinos.models import StockDetalle
         for cod, litros, precio, apt, bodega in stock_data:
-            StockMaterial.objects.create(
+            sm = StockMaterial.objects.create(
                 corte=corte, temporada=t26, material=mats[cod],
                 litros_totales=litros, precio_litro=precio,
                 aptitud_vinos=apt, bodega=bodega)
+            for cuba, cosecha, lit, grado in det_demo.get((cod, bodega), []):
+                StockDetalle.objects.create(
+                    stock=sm, cuba=cuba, cosecha=cosecha,
+                    litros=lit, bodega=bodega, grado_alc=grado)
 
         # Necesidades — update_or_create
         for vino, litros in [(v1,4119647),(v2,84962),(v3,320000),(v4,45000),(v5,0)]:
